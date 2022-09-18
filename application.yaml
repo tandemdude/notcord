@@ -1,0 +1,43 @@
+debug: false
+
+logging:
+  level:
+    root: INFO
+
+server:
+  http2:
+    enabled: true
+  error:
+    whitelabel:
+      enabled: false
+
+spring:
+  main:
+    web-application-type: reactive
+  r2dbc:
+    url: r2dbc:h2:file:///D:/development/notcord/testdb
+    repositories:
+      enabled: true
+    username: sa
+    password:
+  flyway:
+    url: jdbc:h2:file:D:/development/notcord/testdb
+    baseline-on-migrate: true
+    user: sa
+    password:
+  mail:
+    host: ${EMAIL_HOST:smtp.gmail.com}
+    post: ${EMAIL_PORT:587}
+    username: ${EMAIL_ADDRESS}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+
+email:
+  address: ${EMAIL_ADDRESS}
+
+jwt:
+  secret: NkK1y4YK8B4X9yiqCdBdm9FJjTyePhhsz6vfPq8npkvh2Zjx
