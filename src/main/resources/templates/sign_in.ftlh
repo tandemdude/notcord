@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<#import "components.ftlh" as components>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="/output.css" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <title>Notcord</title>
+    <@components.header/>
 </head>
+
 <body class="static bg-slate-100 min-h-screen min-w-screen dark">
-    <#if ctx?? && ctx == "signup">
+    <#if ref?? && ref == "signup">
         <div id="banner" class="flex fixed z-50 gap-8 justify-between items-start py-3 px-4 w-full sm:items-center lg:py-4 bg-dark-mode-grey text-gray-300 animate-fade-in-down">
             <p class="text-sm">Thanks for signing up to Notcord! An email has been sent to your inbox in order to verify your email address.</p>
             <button onclick="$('#banner').hide()" type="button" class="flex items-center text-gray-400 rounded-lg text-sm p-1.5 hover:bg-gray-600 hover:text-white">
@@ -16,11 +16,9 @@
             </button>
         </div>
     </#if>
-    <div class="flex px-10 min-h-screen min-w-screen">
+    <div class="flex relative px-10 min-h-screen min-w-screen">
         <div class="relative p-4 w-full max-w-lg rounded-lg border shadow-md sm:p-6 md:p-8 bg-dark-mode-grey border-gray-700 m-auto">
-            <div class="absolute top-0 -left-4 w-72 h-72 bg-indigo-700 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob -z-10"></div>
-            <div class="absolute top-0 -right-4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000 -z-10"></div>
-            <div class="absolute -bottom-12 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 -z-10"></div>
+            <@components.floatingCircles/>
             <form class="space-y-6 relative" action="#">
                 <h5 class="text-xl font-medium text-white">Sign in to Notcord</h5>
                 <div>

@@ -38,7 +38,7 @@ public class JwtUtil {
                 return Optional.of(claims);
             }
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | ExpiredJwtException ex) {
-            logger.error("Error occurred while decoding JWT token", ex);
+            logger.debug("Error occurred while decoding JWT token", ex);
         }
         return Optional.empty();
     }

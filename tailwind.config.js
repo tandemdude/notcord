@@ -5,7 +5,7 @@ module.exports = {
     extend: {
       animation: {
         blob: "blob 7s infinite",
-        "fade-in-down": "fade-in-down 0.8s ease-out"
+        "fade-in-down": "fade-in-down 0.5s ease-out",
       },
       keyframes: {
         blob: {
@@ -31,7 +31,7 @@ module.exports = {
             opacity: "1",
             transform: "translateY(0)"
           },
-        }
+        },
       },
       colors: {
         "dark-mode-grey": "#2C2F33",

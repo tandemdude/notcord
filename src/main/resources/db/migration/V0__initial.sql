@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS notcord.channels (
 );
 
 CREATE TABLE IF NOT EXISTS notcord.users (
-    id VARCHAR(70) PRIMARY KEY,
+    id VARCHAR(24) PRIMARY KEY,
     username VARCHAR(40) NOT NULL,
     email TEXT NOT NULL,
     password TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS notcord.users (
 );
 
 CREATE TABLE IF NOT EXISTS notcord.oauth2_credentials (
-    client_id VARCHAR(70) PRIMARY KEY,
+    client_id VARCHAR(24) PRIMARY KEY,
     client_secret VARCHAR(32) NOT NULL,
     app_name VARCHAR(40) NOT NULL,
     redirect_uri TEXT NOT NULL,
