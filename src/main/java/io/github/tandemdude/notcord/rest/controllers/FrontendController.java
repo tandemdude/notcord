@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
@@ -96,7 +97,7 @@ public class FrontendController {
     }
 
     @PostMapping("/app/signUp")
-    public Mono<ResponseEntity<Void>> handleSignUp(@RequestBody UserCreateRequestBody body) {
+    public Mono<ResponseEntity<Void>> handleSignUp(@Valid @RequestBody UserCreateRequestBody body) {
         return Mono.just(body)
                 .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
                 .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
@@ -140,12 +141,7 @@ public class FrontendController {
     }
 
     @PostMapping("/app/signIn")
-    public String handleSignIn(@RequestBody UserSignInRequestBody body, ServerWebExchange serverWebExchange) {
+    public String handleSignIn(@Valid @RequestBody UserSignInRequestBody body, ServerWebExchange serverWebExchange) {
         return "404";
-    }
-
-    @GetMapping("/app/test/{name}")
-    public ResponseEntity<String> generateAvatar(@PathVariable String name) {
-        return ResponseEntity.ok(DefaultAvatarGenerator.generateDefaultAvatarSvg(name));
     }
 }

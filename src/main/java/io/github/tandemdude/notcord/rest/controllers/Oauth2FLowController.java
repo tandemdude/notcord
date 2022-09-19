@@ -6,12 +6,6 @@ import io.github.tandemdude.notcord.repositories.Oauth2CredentialsRepository;
 import io.github.tandemdude.notcord.utils.JwtUtil;
 import lombok.Data;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-=======
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
->>>>>>> 43cc262... Begin implementing oauth2 and add proper frontend for login etc pages
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -47,13 +40,6 @@ public class Oauth2FLowController {
             }
 
             return oauth2CredentialsRepository.findById(clientId)
-<<<<<<< HEAD
-                .map(Oauth2Credentials::getRedirectUri)
-                .flatMap(uri -> uri.equals(redirectUri) ? Mono.just(uri) : Mono.empty())
-                .map(uri -> ResponseEntity.ok().build()) // Everything ok present auth prompt
-                .switchIfEmpty(Mono.just(ResponseEntity.badRequest()
-                    .body(new AuthorizationError("invalid_request", "The 'redirect_uri' parameter is invalid"))));
-=======
                     .flatMap(client -> client.getRedirectUri().equals(redirectUri) ? Mono.just(client) : Mono.empty())
                     .map(client -> {
                         Map<String, Object> claims;
@@ -72,7 +58,6 @@ public class Oauth2FLowController {
                     .map(token -> ResponseEntity.status(302).header("Location", "/auth/oauth/prompt?token=" + token).build())
                     .switchIfEmpty(Mono.just(ResponseEntity.badRequest()
                             .body(new AuthorizationError("invalid_request", "The 'redirect_uri' parameter is invalid"))));
->>>>>>> 43cc262... Begin implementing oauth2 and add proper frontend for login etc pages
         }
         return Mono.just(ResponseEntity.status(400)
             .body(new AuthorizationError(
@@ -81,21 +66,11 @@ public class Oauth2FLowController {
             )));
     }
 
-<<<<<<< HEAD
-    @PostMapping("/authorize")
-    public Mono<ResponseEntity<?>> oauth2Authorize(
-        @RequestParam("response_type") String responseType,
-        @RequestParam("client_id") String clientId,
-        @RequestParam("redirect_uri") String redirectUri,
-        @RequestParam(value = "scope", required = false) String scope,
-        @RequestParam(value = "state", required = false) String state
-=======
     @GetMapping("/oauth/authorize")
     public Mono<ResponseEntity<Object>> oauth2Authorize(
             @RequestParam("response_type") String responseType, @RequestParam("client_id") String clientId,
             @RequestParam("redirect_uri") String redirectUri, @RequestParam(value = "scope", required = false) String scope,
             @RequestParam(value = "state", required = false) String state
->>>>>>> 43cc262... Begin implementing oauth2 and add proper frontend for login etc pages
     ) {
         return oauth2CredentialsRepository.existsById(clientId)
             .flatMap(exists -> exists ? handleResponseTypes(
