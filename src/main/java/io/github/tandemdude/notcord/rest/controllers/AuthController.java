@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.util.Map;
 
 @RestController
@@ -23,7 +24,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     public AuthController(
-            UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil
+        UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil
     ) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
@@ -31,29 +32,29 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
-    public Mono<ResponseEntity<Object>> newUser(UserCreateRequestBody body) {
+    public Mono<ResponseEntity<Object>> newUser(@Valid @RequestBody UserCreateRequestBody body) {
         return Mono.just(new User(body.getUsername(), body.getEmail(), passwordHasher.hashPassword(body.getPassword())))
-                .flatMap(userRepository::save)
-                .doOnNext(user -> {
-                    var token = jwtUtil.generateToken(Map.of("userId", user.getId()), 60 * 60 * 2);
-                    String content = "Hi " + body.getUsername() + "!\n\n"
-                            + "Thanks for using NotCord - the crappy discord alternative.\n"
-                            + "Next step is to verify your email address. Click the below link or paste it into a browser:\n\n"
-                            + "http://localhost:8080/auth/users/verifyEmail?token=" + token + "\n\n"
-                            + "The link will expire in 2 hours.\n\n"
-                            + "Cheers,\n"
-                            + "thomm.o";
-                    emailSender.sendEmailAsync(user.getEmail(), "Notcord Email Verification", content);
-                })
-                .map(user -> ResponseEntity.ok(UserResponse.from(user)));
+            .flatMap(userRepository::save)
+            .doOnNext(user -> {
+                var token = jwtUtil.generateToken(Map.of("userId", user.getId()), 60 * 60 * 2);
+                String content = "Hi " + body.getUsername() + "!\n\n"
+                    + "Thanks for using NotCord - the crappy discord alternative.\n"
+                    + "Next step is to verify your email address. Click the below link or paste it into a browser:\n\n"
+                    + "http://localhost:8080/auth/users/verifyEmail?token=" + token + "\n\n"
+                    + "The link will expire in 2 hours.\n\n"
+                    + "Cheers,\n"
+                    + "thomm.o";
+                emailSender.sendEmailAsync(user.getEmail(), "Notcord Email Verification", content);
+            })
+            .map(user -> ResponseEntity.ok(UserResponse.from(user)));
     }
 
     @PostMapping("/users/register")
     @Transactional
-    public Mono<ResponseEntity<?>> registerUser(@RequestBody UserCreateRequestBody body) {
+    public Mono<ResponseEntity<?>> registerUser(@Valid @RequestBody UserCreateRequestBody body) {
         return Mono.just(body)
-                .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
-                .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
+            .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
+            .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
     }
 
     @GetMapping("/users/verifyEmail")
@@ -64,9 +65,9 @@ public class AuthController {
             return Mono.just(ResponseEntity.status(401).body("Email not verified"));
         }
         return userRepository.findById((String) parsed.get().get("userId"))
-                .doOnNext(user -> user.setEmailVerified(true))
-                .flatMap(userRepository::save)
-                .thenReturn(ResponseEntity.ok("Email verified"));
+            .doOnNext(user -> user.setEmailVerified(true))
+            .flatMap(userRepository::save)
+            .thenReturn(ResponseEntity.ok("Email verified"));
     }
 
     // login

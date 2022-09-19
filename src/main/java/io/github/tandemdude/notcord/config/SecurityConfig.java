@@ -16,23 +16,23 @@ public class SecurityConfig implements WebFluxConfigurer {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http.authorizeExchange()
-                .pathMatchers("/**")
-                .permitAll()
-                .anyExchange()
-                .authenticated()
-                .and()
-                .formLogin()
-                .disable()
-                .csrf()
-                .disable()
-                .build();
+            .pathMatchers("/**")
+            .permitAll()
+            .anyExchange()
+            .authenticated()
+            .and()
+            .formLogin()
+            .disable()
+            .csrf()
+            .disable()
+            .build();
     }
 
     @Override
     public void addCorsMappings(CorsRegistry corsRegistry) {
         corsRegistry.addMapping("/api/user")
-                .allowedOriginPatterns("http://localhost:[*]/")
-                .allowedMethods("POST")
-                .maxAge(3600);
+            .allowedOriginPatterns("http://localhost:[*]/")
+            .allowedMethods("POST")
+            .maxAge(3600);
     }
 }

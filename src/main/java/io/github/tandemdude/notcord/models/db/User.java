@@ -6,8 +6,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.math.BigInteger;
-
 @Data
 @Table(name = "users", schema = "notcord")
 public class User implements Persistable<String> {
@@ -28,9 +26,14 @@ public class User implements Persistable<String> {
     }
 
     @Override
+    public String getId() {
+        return this.id;
+    }
+
+    @Override
     public boolean isNew() {
         var isNew = this.id == null;
-        this.id = isNew ? SnowflakeGenerator.newSnowflake().toString() : this.id;
+        this.id = isNew ? SnowflakeGenerator.newSnowflake() : this.id;
         return isNew;
     }
 }

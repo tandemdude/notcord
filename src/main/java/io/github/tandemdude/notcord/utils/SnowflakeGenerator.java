@@ -10,14 +10,14 @@ public class SnowflakeGenerator {
 
     static {
         snowflakeBase = BigInteger
-                .valueOf(Long.parseLong(System.getenv("NC_WORKER_ID")) << 17)
-                .add(BigInteger.valueOf(Long.parseLong(System.getenv("NC_PROCESS_ID")) << 12));
+            .valueOf(Long.parseLong(System.getenv("NC_WORKER_ID")) << 17)
+            .add(BigInteger.valueOf(Long.parseLong(System.getenv("NC_PROCESS_ID")) << 12));
     }
 
     public static String newSnowflake() {
         return snowflakeBase
-                .add(BigInteger.valueOf(generatedIds.getAndAccumulate(1, (x, y) -> (x + y) % 4096)))
-                .add(BigInteger.valueOf(System.currentTimeMillis() - EPOCH).shiftLeft(22))
-                .toString();
+            .add(BigInteger.valueOf(generatedIds.getAndAccumulate(1, (x, y) -> (x + y) % 4096)))
+            .add(BigInteger.valueOf(System.currentTimeMillis() - EPOCH).shiftLeft(22))
+            .toString();
     }
 }

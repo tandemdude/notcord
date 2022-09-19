@@ -21,8 +21,7 @@ public class UserController {
 
     @GetMapping("/{userId:[1-9][0-9]+}")
     public Mono<ResponseEntity<UserResponse>> getUser(@PathVariable String userId) {
-        return userRepository.findById(userId)
-                .map(user -> ResponseEntity.ok(UserResponse.from(user)))
-                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+        return userRepository.findById(userId).map(UserResponse::from).map(ResponseEntity::ok).switchIfEmpty(Mono.just(
+            ResponseEntity.notFound().build()));
     }
 }

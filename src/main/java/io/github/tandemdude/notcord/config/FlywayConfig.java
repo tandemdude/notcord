@@ -16,12 +16,12 @@ public class FlywayConfig {
     @Bean(initMethod = "migrate")
     public Flyway flyway() {
         return new Flyway(Flyway.configure()
-                .baselineOnMigrate(true)
-                .dataSource(
-                        env.getRequiredProperty("spring.flyway.url"),
-                        env.getRequiredProperty("spring.flyway.user"),
-                        env.getRequiredProperty("spring.flyway.password")
-                )
+            .baselineOnMigrate(true)
+            .dataSource(
+                env.getRequiredProperty("spring.flyway.url"),
+                env.getRequiredProperty("spring.flyway.user"),
+                env.getRequiredProperty("spring.flyway.password")
+            )
         );
     }
 }

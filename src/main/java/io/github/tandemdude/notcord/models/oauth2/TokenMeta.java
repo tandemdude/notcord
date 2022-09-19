@@ -23,10 +23,10 @@ public class TokenMeta {
 
     public Map<String, Object> toMap() {
         return Map.of(
-                "subjectId", this.subjectId,
-                "type", this.type.getValue(),
-                "scopes", String.join(",", this.scopes.stream().map(Scope::getValue).toList()),
-                "expiresAt", this.expires
+            "subjectId", this.subjectId,
+            "type", this.type.getValue(),
+            "scopes", String.join(",", this.scopes.stream().map(Scope::getValue).toList()),
+            "expiresAt", this.expires
         );
     }
 }

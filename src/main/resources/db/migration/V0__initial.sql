@@ -1,5 +1,18 @@
 CREATE SCHEMA IF NOT EXISTS notcord;
 
+CREATE TABLE IF NOT EXISTS notcord.guilds (
+    id VARCHAR(70) PRIMARY KEY,
+    owner_id VARCHAR(70) NOT NULL,
+    name VARCHAR(40) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notcord.channels (
+    id VARCHAR(70) PRIMARY KEY,
+    type INTEGER NOT NULL,
+    name VARCHAR(40) NOT NULL,
+    guild_id VARCHAR(70)
+);
+
 CREATE TABLE IF NOT EXISTS notcord.users (
     id VARCHAR(70) PRIMARY KEY,
     username VARCHAR(40) NOT NULL,
