@@ -6,8 +6,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.math.BigInteger;
-
 @Data
 @Table(name = "guilds", schema = "notcord")
 public class Guild implements Persistable<String> {
@@ -16,8 +14,8 @@ public class Guild implements Persistable<String> {
     private String ownerId;
     private String name;
 
-    public Guild(BigInteger ownerId, String name) {
-        this.ownerId = ownerId.toString();
+    public Guild(String ownerId, String name) {
+        this.ownerId = ownerId;
         this.name = name;
     }
 

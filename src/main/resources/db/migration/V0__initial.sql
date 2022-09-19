@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS notcord.users (
 CREATE TABLE IF NOT EXISTS notcord.oauth2_credentials (
     client_id VARCHAR(70) PRIMARY KEY,
     client_secret VARCHAR(32) NOT NULL,
+    app_name VARCHAR(40) NOT NULL,
     redirect_uri TEXT NOT NULL,
     owner_id VARCHAR(70) NOT NULL
 );

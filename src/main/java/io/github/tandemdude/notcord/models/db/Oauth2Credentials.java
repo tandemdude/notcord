@@ -14,10 +14,12 @@ public class Oauth2Credentials implements Persistable<String> {
     @Id
     private String clientId = null;
     private String clientSecret = null;
+    private String appName;
     private String redirectUri;
     private String ownerId;
 
-    public Oauth2Credentials(String redirectUri, String ownerId) {
+    public Oauth2Credentials(String appName, String redirectUri, String ownerId) {
+        this.appName = appName;
         this.redirectUri = redirectUri;
         this.ownerId = ownerId;
     }

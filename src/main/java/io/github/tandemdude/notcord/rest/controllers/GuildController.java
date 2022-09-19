@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.math.BigInteger;
 
 @RestController
 @RequestMapping("/api/guilds")
@@ -34,7 +33,7 @@ public class GuildController {
     ) {
         // TODO - Oauth2 for guild owner
         return Mono.just(body)
-            .map(rb -> new Guild(new BigInteger("0"), rb.getName()))
+            .map(rb -> new Guild("0", rb.getName())) // TODO - Oauth2 for guild owner
             .flatMap(guildRepository::save)
             .map(GuildResponse::from)
             .map(ResponseEntity::ok);
