@@ -25,10 +25,10 @@ public class JwtUtil {
     public String generateToken(Map<String, Object> claims, long expiresInSeconds) {
         var newClaims = new HashMap<>(claims);
         return Jwts.builder()
-                .setClaims(newClaims)
-                .setExpiration(new Date(Instant.now().toEpochMilli() + (expiresInSeconds * 1000)))
-                .signWith(SignatureAlgorithm.HS256, jwtSecret)
-                .compact();
+            .setClaims(newClaims)
+            .setExpiration(new Date(Instant.now().toEpochMilli() + (expiresInSeconds * 1000)))
+            .signWith(SignatureAlgorithm.HS256, jwtSecret)
+            .compact();
     }
 
     public Optional<Map<String, Object>> parseToken(String token) {

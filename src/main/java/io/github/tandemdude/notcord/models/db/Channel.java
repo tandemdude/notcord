@@ -5,19 +5,20 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.math.BigInteger;
+import org.springframework.lang.Nullable;
 
 @Data
-@Table(name = "guilds", schema = "notcord")
-public class Guild implements Persistable<String> {
+@Table(name = "channels", schema = "notcord")
+public class Channel implements Persistable<String> {
     @Id
     private String id = null;
-    private String ownerId;
+    private ChannelType type;
+    private @Nullable String guildId;
     private String name;
 
-    public Guild(BigInteger ownerId, String name) {
-        this.ownerId = ownerId.toString();
+    public Channel(ChannelType type, @Nullable String guildId, String name) {
+        this.type = type;
+        this.guildId = guildId;
         this.name = name;
     }
 

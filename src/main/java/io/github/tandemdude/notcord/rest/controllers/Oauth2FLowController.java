@@ -7,7 +7,10 @@ import io.github.tandemdude.notcord.repositories.Oauth2CredentialsRepository;
 import io.github.tandemdude.notcord.utils.JwtUtil;
 import lombok.Data;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -23,36 +26,49 @@ public class Oauth2FLowController {
         this.jwtUtil = jwtUtil;
     }
 
-    public Mono<ResponseEntity<Object>> handleResponseTypes(String responseType, String clientId, String redirectUri, String scope, String state) {
+    public Mono<ResponseEntity<Object>> handleResponseTypes(
+        String responseType, String clientId, String redirectUri, String scope, String state
+    ) {
         if (responseType.equals("authorization_code")) {
             scope = scope == null ? "identity" : scope;
             if (Arrays.stream(scope.split(",")).allMatch(Scope::contains)) {
                 return Mono.just(ResponseEntity.badRequest()
-                        .body(new AuthorizationError("invalid_scope", "One or more scopes were not recognised")));
+                    .body(new AuthorizationError("invalid_scope", "One or more scopes were not recognised")));
             }
 
             // TODO - jwt cannot contain any null values in claims
 //            var session = jwtUtil.generateToken(Map.of("clientId", clientId, "redirectUri", redirectUri, "scope", scope, "state", state), 60 * 60 * 15);
             return oauth2CredentialsRepository.findById(clientId)
-                    .map(Oauth2Credentials::getRedirectUri)
-                    .flatMap(uri -> uri.equals(redirectUri) ? Mono.just(uri) : Mono.empty())
-                    .map(uri -> ResponseEntity.ok().build()) // Everything ok present auth prompt
-                    .switchIfEmpty(Mono.just(ResponseEntity.badRequest()
-                            .body(new AuthorizationError("invalid_request", "The 'redirect_uri' parameter is invalid"))));
+                .map(Oauth2Credentials::getRedirectUri)
+                .flatMap(uri -> uri.equals(redirectUri) ? Mono.just(uri) : Mono.empty())
+                .map(uri -> ResponseEntity.ok().build()) // Everything ok present auth prompt
+                .switchIfEmpty(Mono.just(ResponseEntity.badRequest()
+                    .body(new AuthorizationError("invalid_request", "The 'redirect_uri' parameter is invalid"))));
         }
         return Mono.just(ResponseEntity.status(400)
-                .body(new AuthorizationError("unsupported_response_type", "Response type '" + responseType + "' is not permitted")));
+            .body(new AuthorizationError(
+                "unsupported_response_type",
+                "Response type '" + responseType + "' is not permitted"
+            )));
     }
 
     @PostMapping("/authorize")
     public Mono<ResponseEntity<?>> oauth2Authorize(
-            @RequestParam("response_type") String responseType, @RequestParam("client_id") String clientId,
-            @RequestParam("redirect_uri") String redirectUri, @RequestParam(value = "scope", required = false) String scope,
-            @RequestParam(value = "state", required = false) String state
+        @RequestParam("response_type") String responseType,
+        @RequestParam("client_id") String clientId,
+        @RequestParam("redirect_uri") String redirectUri,
+        @RequestParam(value = "scope", required = false) String scope,
+        @RequestParam(value = "state", required = false) String state
     ) {
         return oauth2CredentialsRepository.existsById(clientId)
-                .flatMap(exists -> exists ? handleResponseTypes(responseType, clientId, redirectUri, scope, state)
-                        : Mono.just(ResponseEntity.status(400).body(new AuthorizationError("invalid_request", "The 'client_id' parameter is invalid"))));
+            .flatMap(exists -> exists ? handleResponseTypes(
+                responseType,
+                clientId,
+                redirectUri,
+                scope,
+                state
+            ) : Mono.just(ResponseEntity.status(400)
+                .body(new AuthorizationError("invalid_request", "The 'client_id' parameter is invalid"))));
     }
 
     @PostMapping("/token")
