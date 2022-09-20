@@ -1,5 +1,6 @@
 package io.github.tandemdude.notcord.models.db;
 
+import io.github.tandemdude.notcord.utils.DefaultAvatarGenerator;
 import io.github.tandemdude.notcord.utils.SnowflakeGenerator;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -16,6 +17,7 @@ public class User implements Persistable<String> {
 
     private String email;
     private String password;
+    private String defaultAvatarSvg = null;
 
     private Boolean emailVerified = false;
 
@@ -33,7 +35,10 @@ public class User implements Persistable<String> {
     @Override
     public boolean isNew() {
         var isNew = this.id == null;
-        this.id = isNew ? SnowflakeGenerator.newSnowflake() : this.id;
+        if (isNew) {
+            this.id = SnowflakeGenerator.newSnowflake();
+            this.defaultAvatarSvg = DefaultAvatarGenerator.generateDefaultAvatarSvg(this.username);
+        }
         return isNew;
     }
 }

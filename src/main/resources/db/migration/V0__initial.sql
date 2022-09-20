@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS notcord.users (
     username VARCHAR(40) NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
+    default_avatar_svg TEXT NOT NULL,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE
 );
 
