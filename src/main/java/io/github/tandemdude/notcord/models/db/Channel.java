@@ -1,5 +1,6 @@
 package io.github.tandemdude.notcord.models.db;
 
+import io.github.tandemdude.notcord.models.db.enums.ChannelType;
 import io.github.tandemdude.notcord.utils.SnowflakeGenerator;
 import lombok.Data;
 import org.springframework.data.annotation.Id;

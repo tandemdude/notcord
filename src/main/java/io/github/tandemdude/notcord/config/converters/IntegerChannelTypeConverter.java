@@ -1,6 +1,6 @@
 package io.github.tandemdude.notcord.config.converters;
 
-import io.github.tandemdude.notcord.models.db.ChannelType;
+import io.github.tandemdude.notcord.models.db.enums.ChannelType;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.stereotype.Component;

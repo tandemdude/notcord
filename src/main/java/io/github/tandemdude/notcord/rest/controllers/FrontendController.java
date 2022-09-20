@@ -6,8 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.tandemdude.notcord.models.db.User;
 import io.github.tandemdude.notcord.models.requests.UserCreateRequestBody;
 import io.github.tandemdude.notcord.models.requests.UserSignInRequestBody;
+import io.github.tandemdude.notcord.models.responses.Oauth2TokenResponse;
 import io.github.tandemdude.notcord.repositories.UserRepository;
-import io.github.tandemdude.notcord.utils.DefaultAvatarGenerator;
+import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.EmailSender;
 import io.github.tandemdude.notcord.utils.JwtUtil;
 import io.github.tandemdude.notcord.utils.PasswordHasher;
@@ -36,13 +37,15 @@ public class FrontendController {
     private final EmailSender emailSender;
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
+    private final Oauth2AuthorizerService oauth2AuthorizerService;
 
-    public FrontendController(UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil, ObjectMapper objectMapper) {
+    public FrontendController(UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil, ObjectMapper objectMapper, Oauth2AuthorizerService oauth2AuthorizerService) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.emailSender = emailSender;
         this.jwtUtil = jwtUtil;
         this.objectMapper = objectMapper;
+        this.oauth2AuthorizerService = oauth2AuthorizerService;
     }
 
     public String flashMessage(@Nullable String currentFlashes, String message) {
@@ -98,6 +101,7 @@ public class FrontendController {
 
     @PostMapping("/app/signUp")
     public Mono<ResponseEntity<Void>> handleSignUp(@Valid @RequestBody UserCreateRequestBody body) {
+        // TODO - we might want to protect this using CORS
         return Mono.just(body)
                 .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
                 .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
@@ -129,11 +133,13 @@ public class FrontendController {
     @GetMapping("/app/signIn")
     public String renderSignIn(
             @CookieValue(value = "session", required = false) String existingSession,
-            @RequestParam(required = false) String ref, ServerWebExchange serverWebExchange, Model model
+            @RequestParam(required = false) String ref, ServerWebExchange serverWebExchange,
+            @RequestParam(required = false) String returnTo, Model model
     ) {
         Optional<Map<String, Object>> decoded = existingSession == null ? Optional.empty() : jwtUtil.parseToken(existingSession);
         if (decoded.isEmpty()) {
             model.addAttribute("ref", ref);
+            model.addAttribute("returnTo", returnTo);
             serverWebExchange.getResponse().addCookie(ResponseCookie.from("session", "").maxAge(0).build());
             return "sign_in";
         }
@@ -141,7 +147,12 @@ public class FrontendController {
     }
 
     @PostMapping("/app/signIn")
-    public String handleSignIn(@Valid @RequestBody UserSignInRequestBody body, ServerWebExchange serverWebExchange) {
-        return "404";
+    public Mono<ResponseEntity<Oauth2TokenResponse>> handleSignIn(@Valid @RequestBody UserSignInRequestBody body, ServerWebExchange serverWebExchange) {
+        // TODO - we might want to protect this using CORS
+        return userRepository.findByEmail(body.getEmail())
+            .flatMap(user -> passwordHasher.comparePasswords(body.getPassword(), user.getPassword()) ? Mono.just(user) : Mono.empty())
+            .flatMap(oauth2AuthorizerService::generateUserTokenFromSignIn)
+            .map(tokenPair -> ResponseEntity.ok(Oauth2TokenResponse.from(tokenPair)))  // Generate long-lived access token (6 months?) and return to sender
+            .switchIfEmpty(Mono.just(ResponseEntity.status(401).build()));
     }
 }

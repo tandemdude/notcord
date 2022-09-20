@@ -69,12 +69,12 @@
                             submitBtn.disabled = false;
                             submitBtn.classList.add("hover:bg-indigo-700", "bg-indigo-500");
                             submitBtn.classList.remove("bg-indigo-700");
-                            submitBtn.innerHTML = "Sign in";
+                            submitBtn.innerHTML = "Sign Up";
                         }
                     }
                 })
             }
-        })
+        });
 
         function validateForm() {
             let password = document.forms["signup"]["password"].value;

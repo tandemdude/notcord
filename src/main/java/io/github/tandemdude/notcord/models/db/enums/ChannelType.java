@@ -1,4 +1,4 @@
-package io.github.tandemdude.notcord.models.db;
+package io.github.tandemdude.notcord.models.db.enums;
 
 
 import com.fasterxml.jackson.annotation.JsonValue;
