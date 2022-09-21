@@ -113,4 +113,44 @@ public class DefaultAvatarGenerator {
                 14 - eyeSpread, faceColour, 20 + eyeSpread, faceColour
         ).replace("\n", "").replace("    ", "");
     }
+
+    public static String generateDefaultAppIconSvg(String appName) {
+        var nameHashCode = hashCodeOf(appName);
+        var palette = getPalette(nameHashCode);
+
+        var e0_color = getColour(nameHashCode, palette);
+
+        var e1_color = getColour(nameHashCode + 1, palette);
+        var e1_translateX = getUnit(nameHashCode * 2, 1, 1);
+        var e1_translateY = getUnit(nameHashCode * 2, 1, 2);
+        var e1_rotate = getUnit(nameHashCode * 2, 360, null);
+        var e1_isSquare = getBoolean(nameHashCode, 2);
+
+        var e2_color = getColour(nameHashCode + 2, palette);
+        var e2_translateX = getUnit(nameHashCode * 3, -1, 1);
+        var e2_translateY = getUnit(nameHashCode * 3, -1, 2);
+
+        var e3_color = getColour(nameHashCode + 3, palette);
+        var e3_translateX = getUnit(nameHashCode * 4, -2, 1);
+        var e3_translateY = getUnit(nameHashCode * 4, -2, 2);
+        var e3_rotate = getUnit(nameHashCode * 4, 360, null);
+
+        return String.format(
+                """
+                <svg viewBox="0 0 80 80" fill="none" role="img" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+                    <title>%s</title>
+                    <mask id="mask__bauhaus" maskUnits="userSpaceOnUse" x="0" y="0" width="80" height="80">
+                        <rect width="80" height="80" rx="160" fill="#FFFFFF"></rect>
+                    </mask>
+                    <g mask="url(#mask__bauhaus)">
+                        <rect width="80" height="80" fill="%s"></rect>
+                        <rect x="10" y="30" width="80" height="%s" fill="%s" transform="translate(%s %s) rotate(%s 40 40)"></rect>
+                        <circle cx="40" cy="40" fill="%s" r="16" transform="translate(%s %s)"></circle>
+                        <line x1="0" y1="40" x2="80" y2="40" stroke-width="2" stroke="%s" transform="translate(%s %s) rotate(%s 40 40)"></line>
+                    </g>
+                </svg>
+                """, appName, e0_color, e1_isSquare ? 80 : 10, e1_color, e1_translateX, e1_translateY, e1_rotate,
+                e2_color, e2_translateX, e2_translateY, e3_color, e3_translateX, e3_translateY, e3_rotate
+        ).replace("\n", "").replace("    ", "");
+    }
 }

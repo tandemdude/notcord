@@ -30,7 +30,7 @@ public class SecurityConfig implements WebFluxConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry corsRegistry) {
-        corsRegistry.addMapping("/api/user")
+        corsRegistry.addMapping("/**")
             .allowedOriginPatterns("http://localhost:[*]/")
             .allowedMethods("POST")
             .maxAge(3600);

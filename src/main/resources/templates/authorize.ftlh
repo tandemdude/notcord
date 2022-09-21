@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<#import "components.ftlh" as components>
-
 <head>
-    <@components.header/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/output.css" rel="stylesheet">
+    <title>Notcord</title>
 </head>
 
 <body class="static bg-slate-100 min-h-screen min-w-screen dark">
     <div class="flex px-10 min-h-screen min-w-screen">
         <div class="relative p-4 w-full max-w-lg rounded-lg border shadow-md sm:p-6 md:p-8 bg-dark-mode-grey border-gray-700 m-auto">
-            <@components.floatingCircles/>
+            <div class="absolute top-0 -left-4 w-72 h-72 bg-indigo-700 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob -z-10"></div>
+            <div class="absolute top-0 -right-4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000 -z-10"></div>
+            <div class="absolute -bottom-12 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 -z-10"></div>
             <div class="space-y-6 relative">
                 <div>
                     <h5 class="text-xl font-medium text-white">${appName}</h5>
@@ -36,8 +39,8 @@
                     </ul>
                 </div>
                 <div class="flex items-center">
-                    <a href="/auth/oauth/complete?token=${denyToken}" class="w-full mr-4 text-white bg-red-500 hover:bg-red-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Deny</a>
-                    <a href="/auth/oauth/complete?token=${allowToken}" class="w-full ml-4 text-white bg-indigo-500 hover:bg-indigo-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Authorize</a>
+                    <a href="/oauth/complete?token=${denyToken}" class="w-full mr-4 text-white bg-red-500 hover:bg-red-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Deny</a>
+                    <a href="/oauth/complete?token=${allowToken}" class="w-full ml-4 text-white bg-indigo-500 hover:bg-indigo-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Authorize</a>
                 </div>
             </div>
         </div>

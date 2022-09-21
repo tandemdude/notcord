@@ -19,12 +19,12 @@ import java.util.Arrays;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/auth")
-public class Oauth2FLowController {
+@RequestMapping("/oauth")
+public class Oauth2FlowController {
     private final Oauth2CredentialsRepository oauth2CredentialsRepository;
     private final JwtUtil jwtUtil;
 
-    public Oauth2FLowController(Oauth2CredentialsRepository oauth2CredentialsRepository, JwtUtil jwtUtil) {
+    public Oauth2FlowController(Oauth2CredentialsRepository oauth2CredentialsRepository, JwtUtil jwtUtil) {
         this.oauth2CredentialsRepository = oauth2CredentialsRepository;
         this.jwtUtil = jwtUtil;
     }
@@ -33,8 +33,8 @@ public class Oauth2FLowController {
         String responseType, String clientId, String redirectUri, String scope, String state
     ) {
         if (responseType.equals("authorization_code")) {
-            var finalScope = scope == null ? "identity" : scope;
-            if (Arrays.stream(finalScope.split(",")).allMatch(Scope::contains)) {
+            var finalScope = scope == null ? "identify" : scope;
+            if (Arrays.stream(finalScope.split(" ")).allMatch(Scope.getScopeValueMap()::containsKey)) {
                 return Mono.just(ResponseEntity.badRequest()
                     .body(new AuthorizationError("invalid_scope", "One or more scopes were not recognised")));
             }
@@ -66,7 +66,7 @@ public class Oauth2FLowController {
             )));
     }
 
-    @GetMapping("/oauth/authorize")
+    @GetMapping("/authorize")
     public Mono<ResponseEntity<Object>> oauth2Authorize(
             @RequestParam("response_type") String responseType, @RequestParam("client_id") String clientId,
             @RequestParam("redirect_uri") String redirectUri, @RequestParam(value = "scope", required = false) String scope,
@@ -83,11 +83,11 @@ public class Oauth2FLowController {
                 .body(new AuthorizationError("invalid_request", "The 'client_id' parameter is invalid"))));
     }
 
-    @GetMapping("/oauth/prompt")
+    @GetMapping("/prompt")
     public String displayConsentScreen(@RequestParam String token, Model model) {
         var decoded = jwtUtil.parseToken(token);
         if (decoded.isEmpty()) {
-            return "404";
+            return "redirect:http://localhost:3000/404";
         }
 
         var allowToken = jwtUtil.generateToken(Map.of("inner", token, "consent", "allow"), 60 * 15);
@@ -96,22 +96,22 @@ public class Oauth2FLowController {
         model.addAttribute("allowToken", allowToken);
         model.addAttribute("denyToken", denyToken);
         model.addAttribute("appName", decoded.get().get("appName"));
-        model.addAttribute("scopes", ((String) decoded.get().get("scope")).split(","));
+        model.addAttribute("scopes", ((String) decoded.get().get("scope")).split(" "));
         model.addAttribute("redirectUri", decoded.get().get("redirectUri"));
         model.addAttribute("appName", decoded.get().get("appName"));
 
         return "authorize";
     }
 
-    @GetMapping("/oauth/complete")
+    @GetMapping("/complete")
     public String completeAuthentication(@RequestParam String token) {
         var decoded = jwtUtil.parseToken(token);
         if (decoded.isEmpty()) {
-            return "404";
+            return "redirect:http://localhost:3000/404";
         }
         var inner = jwtUtil.parseToken((String) decoded.get().get("inner"));
         if (inner.isEmpty()) {
-            return "404";
+            return "redirect:http://localhost:3000/404";
         }
 
         if (!"allow".equals(decoded.get().get("consent"))) {
@@ -123,12 +123,13 @@ public class Oauth2FLowController {
             }
             return "redirect:" + uri.build();
         }
-
-        return "404";
+        // TODO - authorize
+        return "redirect:http://localhost:3000/404";
     }
 
-    @PostMapping("/oauth/token")
+    @PostMapping("/token")
     public Mono<ResponseEntity<?>> oauth2Token() {
+        // TODO - access token grant and token refreshing
         return Mono.just(ResponseEntity.notFound().build());
     }
 

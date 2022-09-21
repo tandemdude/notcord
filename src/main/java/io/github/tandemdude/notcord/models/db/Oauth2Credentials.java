@@ -1,5 +1,6 @@
 package io.github.tandemdude.notcord.models.db;
 
+import io.github.tandemdude.notcord.utils.DefaultAvatarGenerator;
 import io.github.tandemdude.notcord.utils.SnowflakeGenerator;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -17,6 +18,7 @@ public class Oauth2Credentials implements Persistable<String> {
     private String appName;
     private String redirectUri;
     private String ownerId;
+    private String defaultIconSvg = null;
 
     public Oauth2Credentials(String appName, String redirectUri, String ownerId) {
         this.appName = appName;
@@ -35,6 +37,7 @@ public class Oauth2Credentials implements Persistable<String> {
         if (isNew) {
             this.clientId = SnowflakeGenerator.newSnowflake();
             this.clientSecret = UUID.randomUUID().toString().replace("-", "");
+            this.defaultIconSvg = DefaultAvatarGenerator.generateDefaultAppIconSvg(this.appName);
         }
         return isNew;
     }
