@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
@@ -88,5 +87,10 @@ public class ClientAuthenticationController {
                 .flatMap(userRepository::save)
                 .map(user -> ResponseEntity.status(202).build())
                 .switchIfEmpty(Mono.just(ResponseEntity.status(409).build()));
+    }
+
+    @PostMapping("/refresh")
+    public void refreshUserToken(@RequestParam String token) {
+        // TODO - implement this lol
     }
 }

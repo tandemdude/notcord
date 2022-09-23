@@ -1,8 +1,1 @@
-dependency-reduced-pom.xml
-target/
-*.iml
 .idea/
-.mvn/wrapper/*.jar
-.DS_Store
-*.db
-node_modules/
