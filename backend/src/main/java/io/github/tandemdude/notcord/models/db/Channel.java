@@ -14,7 +14,8 @@ public class Channel implements Persistable<String> {
     @Id
     private String id = null;
     private ChannelType type;
-    private @Nullable String guildId;
+    @Nullable
+    private String guildId;
     private String name;
 
     public Channel(ChannelType type, @Nullable String guildId, String name) {

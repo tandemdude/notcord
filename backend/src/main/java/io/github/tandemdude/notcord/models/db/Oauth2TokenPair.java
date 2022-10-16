@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.lang.Nullable;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -20,8 +21,11 @@ public class Oauth2TokenPair implements Persistable<String> {
     private long expiresIn;
     private String userId;
     private long scope;
+    // The client ID that the tokens are linked to. Will be null if tokens were generated for the frontend
+    @Nullable
+    private String clientId;
 
-    public Oauth2TokenPair(String type, String accessToken, String refreshToken, Instant expiresAt, long expiresIn, String userId, long scope) {
+    public Oauth2TokenPair(String type, String accessToken, String refreshToken, Instant expiresAt, long expiresIn, String userId, long scope, String clientId) {
         this.type = type;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
@@ -29,6 +33,7 @@ public class Oauth2TokenPair implements Persistable<String> {
         this.expiresIn = expiresIn;
         this.userId = userId;
         this.scope = scope;
+        this.clientId = clientId;
     }
 
     @Override

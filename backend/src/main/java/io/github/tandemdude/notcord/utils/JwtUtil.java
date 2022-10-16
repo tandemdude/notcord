@@ -33,12 +33,20 @@ public class JwtUtil {
 
     public Optional<Map<String, Object>> parseToken(String token) {
         try {
-            var claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
-            if (claims.getExpiration().after(new Date(Instant.now().toEpochMilli()))) {
-                return Optional.of(claims);
-            }
+            return Optional.of(Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody());
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | ExpiredJwtException ex) {
             logger.debug("Error occurred while decoding JWT token", ex);
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Map<String, Object>> parseTokenAllowExpired(String token) {
+        try {
+            return Optional.of(Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody());
+        } catch (UnsupportedJwtException | MalformedJwtException | SignatureException ex) {
+            logger.debug("Error occurred while decoding JWT token", ex);
+        } catch (ExpiredJwtException ex) {
+            return Optional.of(ex.getClaims());
         }
         return Optional.empty();
     }

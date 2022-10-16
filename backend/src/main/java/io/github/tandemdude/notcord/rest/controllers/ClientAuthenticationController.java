@@ -1,9 +1,11 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
 import io.github.tandemdude.notcord.models.db.User;
+import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.UserCreateRequestBody;
 import io.github.tandemdude.notcord.models.requests.UserSignInRequestBody;
 import io.github.tandemdude.notcord.models.responses.Oauth2TokenResponse;
+import io.github.tandemdude.notcord.repositories.Oauth2TokenPairRepository;
 import io.github.tandemdude.notcord.repositories.UserRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.EmailSender;
@@ -20,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/client")
@@ -29,13 +32,15 @@ public class ClientAuthenticationController {
     private final EmailSender emailSender;
     private final JwtUtil jwtUtil;
     private final Oauth2AuthorizerService oauth2AuthorizerService;
+    private final Oauth2TokenPairRepository oauth2TokenPairRepository;
 
-    public ClientAuthenticationController(UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil, Oauth2AuthorizerService oauth2AuthorizerService) {
+    public ClientAuthenticationController(UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil, Oauth2AuthorizerService oauth2AuthorizerService, Oauth2TokenPairRepository oauth2TokenPairRepository) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.emailSender = emailSender;
         this.jwtUtil = jwtUtil;
         this.oauth2AuthorizerService = oauth2AuthorizerService;
+        this.oauth2TokenPairRepository = oauth2TokenPairRepository;
     }
 
     public Mono<ResponseEntity<Void>> newUser(UserCreateRequestBody body) {
@@ -69,14 +74,14 @@ public class ClientAuthenticationController {
         // TODO - we might want to protect this using CORS
         return userRepository.findByEmail(body.getEmail())
             .flatMap(user -> passwordHasher.comparePasswords(body.getPassword(), user.getPassword()) ? Mono.just(user) : Mono.empty())
-            .flatMap(oauth2AuthorizerService::generateUserTokenPairFromSignIn)
-            .map(tokenPair -> ResponseEntity.ok(Oauth2TokenResponse.from(tokenPair)))  // Generate long-lived access token (6 months?) and return to sender
-            .switchIfEmpty(Mono.just(ResponseEntity.status(401).build()));
+            .flatMap(oauth2AuthorizerService::generateUserTokenPairForFrontend)
+            .map(tokenPair -> ResponseEntity.ok(Oauth2TokenResponse.from(tokenPair)))
+            .defaultIfEmpty(ResponseEntity.status(401).build());
     }
 
     @PostMapping("/verify-email")
     @Transactional
-    public Mono<ResponseEntity<Object>> verifyUserEmail(@RequestParam("token") String token) {
+    public Mono<ResponseEntity<Object>> verifyUserEmail(@RequestParam String token) {
         var parsed = jwtUtil.parseToken(token);
         if (parsed.isEmpty()) {
             return Mono.just(ResponseEntity.status(401).build());
@@ -86,11 +91,32 @@ public class ClientAuthenticationController {
                 .doOnNext(user -> user.setEmailVerified(true))
                 .flatMap(userRepository::save)
                 .map(user -> ResponseEntity.status(202).build())
-                .switchIfEmpty(Mono.just(ResponseEntity.status(409).build()));
+                .defaultIfEmpty(ResponseEntity.status(409).build());
     }
 
     @PostMapping("/refresh")
-    public void refreshUserToken(@RequestParam String token) {
-        // TODO - implement this lol
+    public Mono<ResponseEntity<Oauth2TokenResponse>> refreshUserToken(@RequestParam String token) {
+        var parsed = jwtUtil.parseToken(token);
+        if (parsed.isEmpty()) {
+            return Mono.just(ResponseEntity.status(401).build());
+        }
+        var data = parsed.get();
+        if (!Objects.equals(data.get("type"), "refresh") || data.get("for") == null) {
+            return Mono.just(ResponseEntity.status(401).build());
+        }
+
+        var accessTokenClaims = jwtUtil.parseTokenAllowExpired((String) data.get("for"));
+        if (accessTokenClaims.isEmpty()) {
+            return Mono.just(ResponseEntity.status(401).build());
+        }
+
+        return oauth2TokenPairRepository.findByRefreshToken(token)
+            .flatMap(pair -> pair.getScope() == Scope.USER ? Mono.just(pair) : Mono.empty())
+            .flatMap(pair -> oauth2TokenPairRepository.delete(pair).thenReturn(pair))
+            .flatMap(pair -> userRepository.findById(pair.getUserId()))
+            .flatMap(oauth2AuthorizerService::generateUserTokenPairForFrontend)
+            .map(Oauth2TokenResponse::from)
+            .map(ResponseEntity::ok)
+            .defaultIfEmpty(ResponseEntity.status(401).build());
     }
 }
