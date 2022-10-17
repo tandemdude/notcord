@@ -24,12 +24,12 @@ export default function Oauth(): JSX.Element {
         // @ts-ignore
         let params = new Proxy(new URLSearchParams(window.location.search), {get: (sp, p) => sp.get(p)});
         let credentials = retrieveCredentials(context);
-        console.log(credentials);
         if (credentials === null || context.accessToken === null) {
             setShowSignIn(true);
             return;
         }
 
+        // TODO - we need to make sure the access token is valid - refresh if necessary
         // @ts-ignore
         let returned = handleReturn(params.returnTo, credentials.accessToken);
         if (!returned) {
@@ -50,8 +50,8 @@ export default function Oauth(): JSX.Element {
             window.location.href = "/404";
         }
     }, [signedIn])
-    // If credentials can be retrieved from browser storage, immediately redirect to given URL
-    // If credentials cannot be retrieved then display sign in form (exclude sign up link and forgot password)
+
+    // Display sign-in if credentials are not available
     return (
         <Card>
             {showSignIn ? <SignInForm setShowSignUp={(_) => {}} setSignedIn={setSignedIn} setContext={setContext}/> : <p>Loading</p>}
