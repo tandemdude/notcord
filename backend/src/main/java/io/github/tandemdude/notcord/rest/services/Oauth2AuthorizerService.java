@@ -13,7 +13,6 @@ import java.util.Map;
 
 @Service
 public class Oauth2AuthorizerService {
-    // TODO - conversion of string scopes to integer
     private final JwtUtil jwtUtil;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
 
@@ -23,19 +22,19 @@ public class Oauth2AuthorizerService {
     }
 
     public String generateRefreshToken(String accessToken) {
-        // Expires in 1 year
-        return jwtUtil.generateToken(Map.of("for", accessToken), 31536000);
+        // Expires in 6 months
+        return jwtUtil.generateToken(Map.of("for", accessToken, "type", "refresh"), 15768000);
     }
 
-    public Mono<Oauth2TokenPair> generateUserTokenPairFromSignIn(User user) {
+    public Mono<Oauth2TokenPair> generateUserTokenPairForFrontend(User user) {
         // Expires in 2 months
-        var accessToken = jwtUtil.generateToken(Map.of("userId", user.getId()), 5260000);
+        var accessToken = jwtUtil.generateToken(Map.of("userId", user.getId(), "type", "access", "scope", Scope.USER), 5260000);
         var refreshToken = generateRefreshToken(accessToken);
         return oauth2TokenPairRepository.save(new Oauth2TokenPair(
-            "Bearer", accessToken, refreshToken, Instant.now().plusSeconds(5260000), 5258200, user.getId(), Scope.USER));
+            "Bearer", accessToken, refreshToken, Instant.now().plusSeconds(5260000), 5258200, user.getId(), Scope.USER, null));
     }
 
-//    public Mono<Oauth2TokenResponse> generateTokenPair(User user, Instant accessTokenExpiresAt) {
+//    public Mono<Oauth2TokenResponse> generateTokenPair(User user, String scope, long accessTokenLifetime) {
 //        return Mono.empty();
 //    }
 }

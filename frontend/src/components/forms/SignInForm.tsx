@@ -1,14 +1,12 @@
 import { useFormik } from "formik";
-import {useContext, useState} from "react";
+import {useState} from "react";
 import {SubmitButtonInteractible, SubmitButtonLoading} from "./SubmitButton";
 import axios from "axios";
-import {SessionContext} from "../../pages/app";
 import {saveCredentials} from "../../utils/credentials";
 
-export default function SignInForm({ setShowSignUp, setSignedIn }) {
+export default function SignInForm({ setShowSignUp, setSignedIn, setContext }) {
     const [loading, setLoading] = useState(false);
     const [incorrectCredentials, setIncorrectCredentials] = useState(false);
-    const context = useContext(SessionContext);
 
     const formik = useFormik({
         initialValues: {
@@ -21,13 +19,16 @@ export default function SignInForm({ setShowSignUp, setSignedIn }) {
             axios.post("http://localhost:8080/client/sign-in", values)
                 .then(response => {
                     if (response.status == 200) {
-                        context.store = values.remember ? "persistent" : "session";
-                        context.accessToken = response.data.access_token;
-                        context.refreshToken = response.data.refresh_token;
+                        let store = values.remember ? "persistent" : "session";
+                        let accessToken = response.data.access_token;
+                        let refreshToken = response.data.refresh_token;
 
                         let expiresIn = parseInt(response.data.expires_in);
-                        context.expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+                        let expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
                         setSignedIn(true);
+
+                        let context = {accessToken, refreshToken, expiresAt, store}
+                        setContext(context)
 
                         saveCredentials(context);
                     }

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS notcord.channels (
     id VARCHAR(24) PRIMARY KEY,
     type INTEGER NOT NULL,
     name VARCHAR(40) NOT NULL,
-    guild_id VARCHAR(70)
+    guild_id VARCHAR(24)
 );
 
 CREATE TABLE IF NOT EXISTS notcord.users (
@@ -38,5 +38,14 @@ CREATE TABLE IF NOT EXISTS notcord.oauth2_tokens (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     expires_in BIGINT NOT NULL,
     user_id VARCHAR(24) NOT NULL,
+    scope INTEGER NOT NULL,
+    client_id VARCHAR(24)
+);
+
+CREATE TABLE IF NOT EXISTS notcord.oauth2_authorization_codes (
+    code VARCHAR(32) PRIMARY KEY,
+    user_id VARCHAR(24) NOT NULL,
+    client_id VARCHAR(24) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     scope INTEGER NOT NULL
 );

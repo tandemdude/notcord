@@ -39,8 +39,8 @@
                     </ul>
                 </div>
                 <div class="flex items-center">
-                    <a href="/oauth/complete?token=${denyToken}" class="w-full mr-4 text-white bg-red-500 hover:bg-red-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Deny</a>
-                    <a href="/oauth/complete?token=${allowToken}" class="w-full ml-4 text-white bg-indigo-500 hover:bg-indigo-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Authorize</a>
+                    <a href="/oauth/complete?token=${denyToken}&userToken=${userToken}" class="w-full mr-4 text-white bg-red-500 hover:bg-red-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Deny</a>
+                    <a href="/oauth/complete?token=${allowToken}&userToken=${userToken}" class="w-full ml-4 text-white bg-indigo-500 hover:bg-indigo-700 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center">Authorize</a>
                 </div>
             </div>
         </div>

@@ -51,6 +51,6 @@ public class GuildController {
             .flatMap(channelRepository::save)
             .map(ChannelResponse::from)
             .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }
