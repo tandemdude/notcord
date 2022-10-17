@@ -34,7 +34,10 @@ public class Oauth2AuthorizerService {
             "Bearer", accessToken, refreshToken, Instant.now().plusSeconds(5260000), 5258200, user.getId(), Scope.USER, null));
     }
 
-//    public Mono<Oauth2TokenResponse> generateTokenPair(User user, String scope, long accessTokenLifetime) {
-//        return Mono.empty();
-//    }
+    public Mono<Oauth2TokenPair> generateTokenPair(User user, long scope, long accessTokenLifetime, String clientId) {
+        var accessToken = jwtUtil.generateToken(Map.of("userId", user.getId(), "type", "access", "scope", scope), accessTokenLifetime);
+        var refreshToken = generateRefreshToken(accessToken);
+        return oauth2TokenPairRepository.save(new Oauth2TokenPair(
+            "Bearer", accessToken, refreshToken, Instant.now().plusSeconds(accessTokenLifetime), accessTokenLifetime, user.getId(), scope, clientId));
+    }
 }

@@ -4,31 +4,48 @@ import io.github.tandemdude.notcord.models.db.Oauth2AuthorizationCode;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.Oauth2TokenRequestBody;
 import io.github.tandemdude.notcord.models.responses.AuthorizationErrorResponse;
+import io.github.tandemdude.notcord.models.responses.Oauth2TokenResponse;
 import io.github.tandemdude.notcord.repositories.Oauth2AuthorizationCodeRepository;
 import io.github.tandemdude.notcord.repositories.Oauth2CredentialsRepository;
+import io.github.tandemdude.notcord.repositories.Oauth2TokenPairRepository;
+import io.github.tandemdude.notcord.repositories.UserRepository;
+import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.JwtUtil;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/oauth")
 public class Oauth2FlowController {
     private final Oauth2AuthorizationCodeRepository oauth2AuthorizationCodeRepository;
     private final Oauth2CredentialsRepository oauth2CredentialsRepository;
+    private final Oauth2AuthorizerService oauth2AuthorizerService;
+    private final UserRepository userRepository;
+    private final Oauth2TokenPairRepository oauth2TokenPairRepository;
     private final JwtUtil jwtUtil;
 
-    public Oauth2FlowController(Oauth2AuthorizationCodeRepository oauth2AuthorizationCodeRepository, Oauth2CredentialsRepository oauth2CredentialsRepository, JwtUtil jwtUtil) {
+    public Oauth2FlowController(
+        Oauth2AuthorizationCodeRepository oauth2AuthorizationCodeRepository, Oauth2CredentialsRepository oauth2CredentialsRepository,
+        Oauth2AuthorizerService oauth2AuthorizerService, UserRepository userRepository,
+        Oauth2TokenPairRepository oauth2TokenPairRepository, JwtUtil jwtUtil
+    ) {
         this.oauth2AuthorizationCodeRepository = oauth2AuthorizationCodeRepository;
         this.oauth2CredentialsRepository = oauth2CredentialsRepository;
+        this.oauth2AuthorizerService = oauth2AuthorizerService;
+        this.userRepository = userRepository;
+        this.oauth2TokenPairRepository = oauth2TokenPairRepository;
         this.jwtUtil = jwtUtil;
     }
 
@@ -46,25 +63,35 @@ public class Oauth2FlowController {
             }
 
             return oauth2CredentialsRepository.findById(clientId)
-                    .flatMap(client -> client.getRedirectUri().equals(redirectUri) ? Mono.just(client) : Mono.empty())
-                    .map(client -> {
-                        Map<String, Object> claims;
-                        var scopeBitfield = Scope.bitfieldFromScopes(Arrays.asList(scope.split(" ")));
-                        if (state != null) {
-                            claims = Map.of(
-                                    "clientId", clientId, "redirectUri", redirectUri,
-                                    "scope", scopeBitfield, "state", state, "appName", client.getAppName()
-                            );
-                        } else {
-                            claims = Map.of(
-                                    "clientId", clientId, "redirectUri", redirectUri,
-                                    "scope", scopeBitfield, "appName", client.getAppName());
-                        }
-                        return jwtUtil.generateToken(claims, 60 * 60 * 15);
-                    })
-                    .map(token -> ResponseEntity.status(302).header("Location", "http://localhost:3000/app/oauth?returnTo=http://localhost:8080/oauth/prompt/" + token).build())
-                    .defaultIfEmpty(ResponseEntity.badRequest()
-                            .body(new AuthorizationErrorResponse("invalid_request", "The 'redirect_uri' parameter is invalid")));
+                .flatMap(client -> client.getRedirectUri().equals(redirectUri) ? Mono.just(client) : Mono.empty())
+                .map(client -> {
+                    Map<String, Object> claims;
+                    var scopeBitfield = Scope.bitfieldFromScopes(Arrays.asList(scope.split(" ")));
+                    if (state != null) {
+                        claims = Map.of(
+                            "clientId", clientId, "redirectUri", redirectUri,
+                            "scope", scopeBitfield, "state", state, "appName", client.getAppName()
+                        );
+                    }
+                    else {
+                        claims = Map.of(
+                            "clientId", clientId, "redirectUri", redirectUri,
+                            "scope", scopeBitfield, "appName", client.getAppName()
+                        );
+                    }
+                    return jwtUtil.generateToken(claims, 60 * 60 * 15);
+                })
+                .map(token -> ResponseEntity.status(302)
+                    .header(
+                        "Location",
+                        "http://localhost:3000/app/oauth?returnTo=http://localhost:8080/oauth/prompt/" + token
+                    )
+                    .build())
+                .defaultIfEmpty(ResponseEntity.badRequest()
+                    .body(new AuthorizationErrorResponse(
+                        "invalid_request",
+                        "The 'redirect_uri' parameter is invalid"
+                    )));
         }
         return Mono.just(ResponseEntity.status(400)
             .body(new AuthorizationErrorResponse(
@@ -171,9 +198,86 @@ public class Oauth2FlowController {
             .map(url -> "redirect:" + url);
     }
 
-    @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public Mono<ResponseEntity<?>> oauth2Token(@Valid @RequestBody Oauth2TokenRequestBody body) {
-        // TODO - access token grant and token refreshing
-        return Mono.just(ResponseEntity.notFound().build());
+    @Transactional
+    public Mono<ResponseEntity<Object>> handleGrantTypes(Oauth2TokenRequestBody body) {
+        if ("authorization_code".equals(body.getGrantType())) {
+            return oauth2AuthorizationCodeRepository.findByCodeAndClientId(body.getCode(), body.getClientId())
+                .switchIfEmpty(Mono.error(AuthorizationCodeDoesNotExistException::new))
+                // Check if code has expired
+                .filter(code -> Instant.now().isBefore(code.getExpiresAt()))
+                .switchIfEmpty(Mono.error(AuthorizationCodeExpiredException::new))
+                .flatMap(code -> oauth2CredentialsRepository
+                    .findById(code.getClientId())
+                    // Check that the provided client secret matches the one for the code's client ID
+                    .filter(creds -> creds.getClientSecret().equals(body.getClientSecret()))
+                    .switchIfEmpty(Mono.error(CredentialsDoNotMatchException::new))
+                    // Check that the provided redirect URI matches the one for the code's client ID
+                    .flatMap(creds -> creds.getRedirectUri().equals(body.getRedirectUri()) ? Mono.just(code) : Mono.empty())
+                    .switchIfEmpty(Mono.error(RedirectUriIncorrectException::new)))
+                .flatMap(code -> userRepository
+                    .findById(code.getUserId())
+                    // Issue new access token and refresh token pair
+                    .flatMap(user -> oauth2AuthorizerService.generateTokenPair(user, code.getScope(), 43200, code.getClientId()))
+                    // Delete the used authorization code from the database
+                    .flatMap(pair -> oauth2AuthorizationCodeRepository.delete(code).thenReturn(pair)))
+                .map(pair -> ResponseEntity.ok(Oauth2TokenResponse.from(pair)));
+        } else if ("refresh_token".equals(body.getGrantType())) {
+            return oauth2TokenPairRepository.findByRefreshToken(body.getRefreshToken())
+                .switchIfEmpty(Mono.error(RefreshTokenDoesNotExistException::new))
+                // Check if refresh token has expired
+                .filter(pair -> jwtUtil.parseToken(pair.getRefreshToken()).isPresent())
+                .switchIfEmpty(Mono.error(RefreshTokenExpiredException::new))
+                // Check that the provided client ID matches the one for the token pair
+                .filter(pair -> Objects.equals(pair.getClientId(), body.getClientId()))
+                .switchIfEmpty(Mono.error(CredentialsDoNotMatchException::new))
+                .flatMap(pair -> oauth2CredentialsRepository
+                    .findById(body.getClientId())
+                    // Check that the provided client secret matches the one for the token pair's client ID
+                    .filter(creds -> creds.getClientSecret().equals(body.getClientSecret()))
+                    .switchIfEmpty(Mono.error(CredentialsDoNotMatchException::new))
+                    // We don't actually need to know the credentials, so we just return out the original token pair again
+                    .map(creds -> pair))
+                .flatMap(pair -> userRepository
+                    .findById(pair.getUserId())
+                    // Issue new access token and refresh token pair
+                    .flatMap(user -> oauth2AuthorizerService.generateTokenPair(user, pair.getScope(), pair.getExpiresIn(), pair.getClientId()))
+                    // Delete the old token pair from the database
+                    .flatMap(newPair -> oauth2TokenPairRepository.delete(pair).thenReturn(newPair)))
+                .map(pair -> ResponseEntity.ok(Oauth2TokenResponse.from(pair)));
+        }
+
+        return Mono.just(ResponseEntity.status(400)
+            .body(new AuthorizationErrorResponse(
+                "unsupported_grant_type",
+                "Grant type '" + body.getGrantType() + "' is not permitted"
+            )));
     }
+
+    @PostMapping(value = "/token", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public Mono<ResponseEntity<Object>> oauth2Token(@Valid @RequestBody Oauth2TokenRequestBody body) {
+        return handleGrantTypes(body)
+            // Handle errors that could have been caused during authorization code token grant
+            .onErrorReturn(AuthorizationCodeDoesNotExistException.class, ResponseEntity.status(400)
+                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'code' is invalid")))
+            .onErrorReturn(AuthorizationCodeExpiredException.class, ResponseEntity.status(400)
+                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'code' is invalid")))
+            .onErrorReturn(CredentialsDoNotMatchException.class, ResponseEntity.status(401)
+                .body(new AuthorizationErrorResponse("invalid_client", "The provided 'client_id' and 'client_secret' combination is invalid")))
+            .onErrorReturn(RedirectUriIncorrectException.class, ResponseEntity.status(400)
+                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid")))
+            // Handle errors that could have been caused during refresh token grant
+            .onErrorReturn(RefreshTokenDoesNotExistException.class, ResponseEntity.status(400)
+                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
+            .onErrorReturn(RefreshTokenExpiredException.class, ResponseEntity.status(400)
+                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
+            // If for some reason some other error was thrown, or we still have an empty mono
+            .defaultIfEmpty(ResponseEntity.internalServerError().build());
+    }
+
+    public static class AuthorizationCodeDoesNotExistException extends RuntimeException {}
+    public static class AuthorizationCodeExpiredException extends RuntimeException {}
+    public static class CredentialsDoNotMatchException extends RuntimeException {}
+    public static class RedirectUriIncorrectException extends RuntimeException {}
+    public static class RefreshTokenDoesNotExistException extends RuntimeException {}
+    public static class RefreshTokenExpiredException extends RuntimeException {}
 }
