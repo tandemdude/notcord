@@ -1,8 +1,7 @@
-dependency-reduced-pom.xml
-target/
-*.iml
+# Intellij
 .idea/
-.mvn/wrapper/*.jar
+*.iml
+*.iws
+
+# Mac
 .DS_Store
-*.db
-node_modules/

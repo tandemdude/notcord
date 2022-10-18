@@ -1,0 +1,27 @@
+# Eclipse
+.classpath
+.project
+.settings/
+ 
+# Intellij
+.idea/
+*.iml
+*.iws
+ 
+# Mac
+.DS_Store
+*.db
+ 
+# Maven
+log/
+target/
+.mvn/wrapper/*.jar
+dependency-reduced-pom.xml
+
+# Test database
+testdb
+
+# dependencies
+node_modules/
+.pnp
+.pnp.js
