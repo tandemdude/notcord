@@ -18,8 +18,8 @@ target/
 .mvn/wrapper/*.jar
 dependency-reduced-pom.xml
 
-# Default development path
-development/
+# Test database
+testdb
 
 # dependencies
 node_modules/
