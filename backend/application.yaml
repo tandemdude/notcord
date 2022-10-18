@@ -15,7 +15,7 @@ spring:
   main:
     web-application-type: reactive
   r2dbc:
-    url: r2dbc:h2:file://${DB_PATH:./development/notcord/backend/testdb}
+    url: r2dbc:h2:file://${DB_PATH:././development/notcord/backend/testdb}
     repositories:
       enabled: true
     username: sa
