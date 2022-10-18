@@ -20,6 +20,7 @@ public class ChannelController {
 
     @GetMapping("/{channelID:[1-9][0-9]+}")
     public Mono<ResponseEntity<ChannelResponse>> getChannel(@PathVariable String channelID) {
+        // TODO - authorization
         return channelRepository.findById(channelID).map(ChannelResponse::from).map(ResponseEntity::ok).switchIfEmpty(
             Mono.just(ResponseEntity.notFound().build()));
     }

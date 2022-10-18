@@ -1,9 +1,10 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
+import io.github.tandemdude.notcord.exceptions.oauth.*;
 import io.github.tandemdude.notcord.models.db.Oauth2AuthorizationCode;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.Oauth2TokenRequestBody;
-import io.github.tandemdude.notcord.models.responses.AuthorizationErrorResponse;
+import io.github.tandemdude.notcord.models.responses.DefaultErrorResponse;
 import io.github.tandemdude.notcord.models.responses.Oauth2TokenResponse;
 import io.github.tandemdude.notcord.repositories.Oauth2AuthorizationCodeRepository;
 import io.github.tandemdude.notcord.repositories.Oauth2CredentialsRepository;
@@ -59,7 +60,7 @@ public class Oauth2FlowController {
         if (responseType.equals("authorization_code")) {
             if (!Arrays.stream(scope.split(" ")).allMatch(Scope.getScopeValueMap()::containsKey)) {
                 return Mono.just(ResponseEntity.badRequest()
-                    .body(new AuthorizationErrorResponse("invalid_scope", "One or more scopes were not recognised")));
+                    .body(new DefaultErrorResponse("invalid_scope", "One or more scopes were not recognised")));
             }
 
             return oauth2CredentialsRepository.findById(clientId)
@@ -88,13 +89,13 @@ public class Oauth2FlowController {
                     )
                     .build())
                 .defaultIfEmpty(ResponseEntity.badRequest()
-                    .body(new AuthorizationErrorResponse(
+                    .body(new DefaultErrorResponse(
                         "invalid_request",
                         "The 'redirect_uri' parameter is invalid"
                     )));
         }
         return Mono.just(ResponseEntity.status(400)
-            .body(new AuthorizationErrorResponse(
+            .body(new DefaultErrorResponse(
                 "unsupported_response_type",
                 "Response type '" + responseType + "' is not permitted"
             )));
@@ -114,7 +115,7 @@ public class Oauth2FlowController {
                 scope,
                 state
             ) : Mono.just(ResponseEntity.status(400)
-                .body(new AuthorizationErrorResponse("invalid_request", "The 'client_id' parameter is invalid"))));
+                .body(new DefaultErrorResponse("invalid_request", "The 'client_id' parameter is invalid"))));
     }
 
     @GetMapping("/prompt/{token}")
@@ -229,7 +230,7 @@ public class Oauth2FlowController {
                 .switchIfEmpty(Mono.error(RefreshTokenExpiredException::new))
                 // Check that the provided client ID matches the one for the token pair
                 .filter(pair -> Objects.equals(pair.getClientId(), body.getClientId()))
-                .switchIfEmpty(Mono.error(CredentialsDoNotMatchException::new))
+                .switchIfEmpty(Mono.error(RefreshTokenDoesNotExistException::new))
                 .flatMap(pair -> oauth2CredentialsRepository
                     .findById(body.getClientId())
                     // Check that the provided client secret matches the one for the token pair's client ID
@@ -247,7 +248,7 @@ public class Oauth2FlowController {
         }
 
         return Mono.just(ResponseEntity.status(400)
-            .body(new AuthorizationErrorResponse(
+            .body(new DefaultErrorResponse(
                 "unsupported_grant_type",
                 "Grant type '" + body.getGrantType() + "' is not permitted"
             )));
@@ -258,26 +259,19 @@ public class Oauth2FlowController {
         return handleGrantTypes(body)
             // Handle errors that could have been caused during authorization code token grant
             .onErrorReturn(AuthorizationCodeDoesNotExistException.class, ResponseEntity.status(400)
-                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'code' is invalid")))
+                .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid")))
             .onErrorReturn(AuthorizationCodeExpiredException.class, ResponseEntity.status(400)
-                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'code' is invalid")))
+                .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid")))
             .onErrorReturn(CredentialsDoNotMatchException.class, ResponseEntity.status(401)
-                .body(new AuthorizationErrorResponse("invalid_client", "The provided 'client_id' and 'client_secret' combination is invalid")))
+                .body(new DefaultErrorResponse("invalid_client", "The provided 'client_id' and 'client_secret' combination is invalid")))
             .onErrorReturn(RedirectUriIncorrectException.class, ResponseEntity.status(400)
-                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid")))
+                .body(new DefaultErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid")))
             // Handle errors that could have been caused during refresh token grant
             .onErrorReturn(RefreshTokenDoesNotExistException.class, ResponseEntity.status(400)
-                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
+                .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
             .onErrorReturn(RefreshTokenExpiredException.class, ResponseEntity.status(400)
-                .body(new AuthorizationErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
+                .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
             // If for some reason some other error was thrown, or we still have an empty mono
             .defaultIfEmpty(ResponseEntity.internalServerError().build());
     }
-
-    public static class AuthorizationCodeDoesNotExistException extends RuntimeException {}
-    public static class AuthorizationCodeExpiredException extends RuntimeException {}
-    public static class CredentialsDoNotMatchException extends RuntimeException {}
-    public static class RedirectUriIncorrectException extends RuntimeException {}
-    public static class RefreshTokenDoesNotExistException extends RuntimeException {}
-    public static class RefreshTokenExpiredException extends RuntimeException {}
 }

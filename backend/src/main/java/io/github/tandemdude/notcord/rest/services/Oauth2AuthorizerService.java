@@ -1,10 +1,16 @@
 package io.github.tandemdude.notcord.rest.services;
 
+import io.github.tandemdude.notcord.exceptions.auth.MissingRequiredPermissionException;
+import io.github.tandemdude.notcord.exceptions.auth.TokenDoesNotExistException;
+import io.github.tandemdude.notcord.exceptions.auth.TokenExpiredException;
+import io.github.tandemdude.notcord.exceptions.auth.TokenFormatInvalidException;
 import io.github.tandemdude.notcord.models.db.Oauth2TokenPair;
 import io.github.tandemdude.notcord.models.db.User;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
+import io.github.tandemdude.notcord.models.responses.DefaultErrorResponse;
 import io.github.tandemdude.notcord.repositories.Oauth2TokenPairRepository;
 import io.github.tandemdude.notcord.utils.JwtUtil;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -39,5 +45,33 @@ public class Oauth2AuthorizerService {
         var refreshToken = generateRefreshToken(accessToken);
         return oauth2TokenPairRepository.save(new Oauth2TokenPair(
             "Bearer", accessToken, refreshToken, Instant.now().plusSeconds(accessTokenLifetime), accessTokenLifetime, user.getId(), scope, clientId));
+    }
+
+    public Mono<Oauth2TokenPair> extractTokenPair(String token) {
+        var parts = token.split(" ");
+        if (parts.length != 2) {
+            return Mono.error(TokenFormatInvalidException::new);
+        }
+        var tokenType = parts[0];
+        var tokenString = parts[1];
+
+        return oauth2TokenPairRepository.findByAccessToken(tokenString)
+            .switchIfEmpty(Mono.error(TokenDoesNotExistException::new))
+            .filter(pair -> pair.getType().equals(tokenType))
+            .switchIfEmpty(Mono.error(TokenDoesNotExistException::new))
+            .filter(pair -> Instant.now().isBefore(pair.getExpiresAt()))
+            .switchIfEmpty(Mono.error(TokenExpiredException::new));
+    }
+
+    public Mono<ResponseEntity<Object>> handleCommonAuthorizationErrors(Mono<ResponseEntity<Object>> mono) {
+        return mono
+            .onErrorReturn(MissingRequiredPermissionException.class, ResponseEntity.status(403)
+                .body(new DefaultErrorResponse("missing_permissions", "You do not have permission to access the requested resource")))
+            .onErrorReturn(TokenFormatInvalidException.class, ResponseEntity.status(401)
+                .body(new DefaultErrorResponse("invalid_token", "Token format is invalid - must match: '<type> <token>'")))
+            .onErrorReturn(TokenDoesNotExistException.class, ResponseEntity.status(401)
+                .body(new DefaultErrorResponse("invalid_token", "The supplied token is not recognised")))
+            .onErrorReturn(TokenExpiredException.class, ResponseEntity.status(401)
+                .body(new DefaultErrorResponse("invalid_token", "The supplied token is not recognised")));
     }
 }
