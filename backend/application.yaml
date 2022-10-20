@@ -10,6 +10,7 @@ server:
   error:
     whitelabel:
       enabled: false
+    include-message: ALWAYS
 
 spring:
   main:

@@ -1,7 +1,6 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
-import io.github.tandemdude.notcord.exceptions.auth.MissingRequiredPermissionException;
-import io.github.tandemdude.notcord.exceptions.users.UserDoesNotExistException;
+import io.github.tandemdude.notcord.exceptions.ExceptionFactory;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.responses.UserResponse;
 import io.github.tandemdude.notcord.repositories.UserRepository;
@@ -24,14 +23,13 @@ public class UserController {
 
     @GetMapping("/{userId:[1-9][0-9]+}")
     public Mono<ResponseEntity<Object>> getUser(@PathVariable String userId, @RequestHeader("Authorization") String token) {
-        return oauth2AuthorizerService.handleCommonAuthorizationErrors(
+        return
             oauth2AuthorizerService.extractTokenPair(token)
                 .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
-                .switchIfEmpty(Mono.error(MissingRequiredPermissionException::new))
+                .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
                 .flatMap(unused -> userRepository.findById(userId))
-                .switchIfEmpty(Mono.error(UserDoesNotExistException::new))
+                .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
                 .map(UserResponse::from)
-                .map(ResponseEntity::ok)
-        ).onErrorReturn(UserDoesNotExistException.class, ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok);
     }
 }

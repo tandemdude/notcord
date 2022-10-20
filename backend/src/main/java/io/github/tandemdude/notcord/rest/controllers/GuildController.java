@@ -1,14 +1,12 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
-import io.github.tandemdude.notcord.exceptions.auth.MissingRequiredPermissionException;
-import io.github.tandemdude.notcord.exceptions.guilds.GuildDoesNotExistException;
+import io.github.tandemdude.notcord.exceptions.ExceptionFactory;
 import io.github.tandemdude.notcord.models.db.Channel;
 import io.github.tandemdude.notcord.models.db.Guild;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.GuildChannelCreateRequestBody;
 import io.github.tandemdude.notcord.models.requests.GuildCreateRequestBody;
 import io.github.tandemdude.notcord.models.responses.ChannelResponse;
-import io.github.tandemdude.notcord.models.responses.DefaultErrorResponse;
 import io.github.tandemdude.notcord.models.responses.GuildResponse;
 import io.github.tandemdude.notcord.repositories.ChannelRepository;
 import io.github.tandemdude.notcord.repositories.GuildRepository;
@@ -38,45 +36,42 @@ public class GuildController {
     public Mono<ResponseEntity<Object>> createGuild(
         @Valid @RequestBody GuildCreateRequestBody body, @RequestHeader("Authorization") String token
     ) {
-        return oauth2AuthorizerService.handleCommonAuthorizationErrors(
+        return
             oauth2AuthorizerService.extractTokenPair(token)
                 .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))  // Do we want bots to be able to do this?
-                .switchIfEmpty(Mono.error(MissingRequiredPermissionException::new))
+                .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
                 .map(pair -> new Guild(pair.getUserId(), body.getName()))
                 .flatMap(guildRepository::save)
                 .map(GuildResponse::from)
-                .map(ResponseEntity::ok)
-        );
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/{guildId:[1-9][0-9]+}")
     public Mono<ResponseEntity<Object>> getGuild(@PathVariable String guildId, @RequestHeader("Authorization") String token) {
-        return oauth2AuthorizerService.handleCommonAuthorizationErrors(
+        return
             oauth2AuthorizerService.extractTokenPair(token)
                 .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT, Scope.GUILDS_READ))
-                .switchIfEmpty(Mono.error(MissingRequiredPermissionException::new))
+                .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
                 .flatMap(pair -> guildRepository
                     .findById(guildId)  // TODO - Filter to check if owner of token has permission to read this specific guild
-                    .switchIfEmpty(Mono.error(GuildDoesNotExistException::new)))
+                    .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist"))))
                 .map(GuildResponse::from)
-                .map(ResponseEntity::ok)
-        ).onErrorReturn(GuildDoesNotExistException.class, ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok);
     }
 
     @DeleteMapping("/{guildId:[1-9][0-9]+}")
     @Transactional
     public Mono<ResponseEntity<Object>> deleteGuild(@PathVariable String guildId, @RequestHeader("Authorization") String token) {
-        return oauth2AuthorizerService.handleCommonAuthorizationErrors(
+        return
             oauth2AuthorizerService.extractTokenPair(token)
                 .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))
-                .switchIfEmpty(Mono.error(MissingRequiredPermissionException::new))
+                .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
                 .flatMap(pair -> guildRepository
                     .findById(guildId)
-                    .switchIfEmpty(Mono.error(GuildDoesNotExistException::new))
+                    .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
                     .filter(guild -> guild.getOwnerId().equals(pair.getUserId()))
-                    .switchIfEmpty(Mono.error(MissingRequiredPermissionException::new)))
-                .flatMap(guild -> guildRepository.delete(guild).thenReturn(ResponseEntity.noContent().build()))
-        ).onErrorReturn(GuildDoesNotExistException.class, ResponseEntity.notFound().build());
+                    .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException)))
+                .flatMap(guild -> guildRepository.delete(guild).thenReturn(ResponseEntity.noContent().build()));
     }
 
     @PostMapping("/{guildId:[1-9][0-9]+}/channels")
@@ -87,10 +82,10 @@ public class GuildController {
         // TODO - authorization
         return guildRepository.existsById(guildId)
             .flatMap(exists -> exists ? Mono.just(body) : Mono.empty())
+            .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
             .map(rb -> new Channel(rb.getType(), guildId, rb.getName()))
             .flatMap(channelRepository::save)
             .map(ChannelResponse::from)
-            .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .map(ResponseEntity::ok);
     }
 }
