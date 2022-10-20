@@ -23,13 +23,12 @@ public class UserController {
 
     @GetMapping("/{userId:[1-9][0-9]+}")
     public Mono<ResponseEntity<Object>> getUser(@PathVariable String userId, @RequestHeader("Authorization") String token) {
-        return
-            oauth2AuthorizerService.extractTokenPair(token)
-                .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
-                .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
-                .flatMap(unused -> userRepository.findById(userId))
-                .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
-                .map(UserResponse::from)
-                .map(ResponseEntity::ok);
+        return oauth2AuthorizerService.extractTokenPair(token)
+            .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
+            .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
+            .flatMap(unused -> userRepository.findById(userId))
+            .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
+            .map(UserResponse::from)
+            .map(ResponseEntity::ok);
     }
 }
