@@ -49,6 +49,20 @@ public class GuildController {
         );
     }
 
+    @GetMapping("/{guildId:[1-9][0-9]+}")
+    public Mono<ResponseEntity<Object>> getGuild(@PathVariable String guildId, @RequestHeader("Authorization") String token) {
+        return oauth2AuthorizerService.handleCommonAuthorizationErrors(
+            oauth2AuthorizerService.extractTokenPair(token)
+                .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT, Scope.GUILDS_READ))
+                .switchIfEmpty(Mono.error(MissingRequiredPermissionException::new))
+                .flatMap(pair -> guildRepository
+                    .findById(guildId)  // TODO - Filter to check if owner of token has permission to read this specific guild
+                    .switchIfEmpty(Mono.error(GuildDoesNotExistException::new)))
+                .map(GuildResponse::from)
+                .map(ResponseEntity::ok)
+        ).onErrorReturn(GuildDoesNotExistException.class, ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{guildId:[1-9][0-9]+}")
     @Transactional
     public Mono<ResponseEntity<Object>> deleteGuild(@PathVariable String guildId, @RequestHeader("Authorization") String token) {
