@@ -53,8 +53,9 @@ export default function Oauth(): JSX.Element {
 
     // Display sign-in if credentials are not available
     return (
-        <Card>
-            {showSignIn ? <SignInForm setShowSignUp={(_) => {}} setSignedIn={setSignedIn} setContext={setContext}/> : <p>Loading</p>}
-        </Card>
+            <Card>
+                {showSignIn ? <SignInForm setShowSignUp={(_) => {
+                }} setSignedIn={setSignedIn} setContext={setContext}/> : <p>Loading</p>}
+            </Card>
     );
 }

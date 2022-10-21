@@ -34,7 +34,14 @@ public class ClientAuthenticationController {
     private final Oauth2AuthorizerService oauth2AuthorizerService;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
 
-    public ClientAuthenticationController(UserRepository userRepository, PasswordHasher passwordHasher, EmailSender emailSender, JwtUtil jwtUtil, Oauth2AuthorizerService oauth2AuthorizerService, Oauth2TokenPairRepository oauth2TokenPairRepository) {
+    public ClientAuthenticationController(
+        UserRepository userRepository,
+        PasswordHasher passwordHasher,
+        EmailSender emailSender,
+        JwtUtil jwtUtil,
+        Oauth2AuthorizerService oauth2AuthorizerService,
+        Oauth2TokenPairRepository oauth2TokenPairRepository
+    ) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.emailSender = emailSender;
@@ -45,19 +52,19 @@ public class ClientAuthenticationController {
 
     public Mono<ResponseEntity<Void>> newUser(UserCreateRequestBody body) {
         return Mono.just(new User(body.getUsername(), body.getEmail(), passwordHasher.hashPassword(body.getPassword())))
-                .flatMap(userRepository::save)
-                .doOnNext(user -> {
-                    var token = jwtUtil.generateToken(Map.of("userId", user.getId()), 60 * 60 * 2);
-                    String content = "Hi " + body.getUsername() + "!\n\n"
-                            + "Thanks for using NotCord - the crappy discord alternative.\n"
-                            + "Next step is to verify your email address. Click the below link or paste it into a browser:\n\n"
-                            + "http://localhost:3000/app/verify-email?token=" + token + "\n\n"
-                            + "The link will expire in 2 hours.\n\n"
-                            + "Cheers,\n"
-                            + "thomm.o";
-                    emailSender.sendEmailAsync(user.getEmail(), "Notcord Email Verification", content);
-                })
-                .map(user -> ResponseEntity.ok().build());
+            .flatMap(userRepository::save)
+            .doOnNext(user -> {
+                var token = jwtUtil.generateToken(Map.of("userId", user.getId()), 60 * 60 * 2);
+                String content = "Hi " + body.getUsername() + "!\n\n"
+                    + "Thanks for using NotCord - the crappy discord alternative.\n"
+                    + "Next step is to verify your email address. Click the below link or paste it into a browser:\n\n"
+                    + "http://localhost:3000/app/verify-email?token=" + token + "\n\n"
+                    + "The link will expire in 2 hours.\n\n"
+                    + "Cheers,\n"
+                    + "thomm.o";
+                emailSender.sendEmailAsync(user.getEmail(), "Notcord Email Verification", content);
+            })
+            .map(user -> ResponseEntity.ok().build());
     }
 
     @PostMapping("/sign-up")
@@ -65,15 +72,18 @@ public class ClientAuthenticationController {
         // TODO - we might want to protect this using CORS
         // TODO - validation (/^[\w\-.]{5,40}$/)
         return Mono.just(body)
-                .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
-                .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
+            .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
+            .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
     }
 
     @PostMapping("/sign-in")
     public Mono<ResponseEntity<Oauth2TokenResponse>> handleSignIn(@Valid @RequestBody UserSignInRequestBody body) {
         // TODO - we might want to protect this using CORS
         return userRepository.findByEmail(body.getEmail())
-            .flatMap(user -> passwordHasher.comparePasswords(body.getPassword(), user.getPassword()) ? Mono.just(user) : Mono.empty())
+            .flatMap(user -> passwordHasher.comparePasswords(
+                body.getPassword(),
+                user.getPassword()
+            ) ? Mono.just(user) : Mono.empty())
             .flatMap(oauth2AuthorizerService::generateUserTokenPairForFrontend)
             .map(tokenPair -> ResponseEntity.ok(Oauth2TokenResponse.from(tokenPair)))
             .defaultIfEmpty(ResponseEntity.status(401).build());
@@ -87,11 +97,11 @@ public class ClientAuthenticationController {
             return Mono.just(ResponseEntity.status(401).build());
         }
         return userRepository.findById((String) parsed.get().get("userId"))
-                .flatMap(user -> user.getEmailVerified() ? Mono.empty() : Mono.just(user))
-                .doOnNext(user -> user.setEmailVerified(true))
-                .flatMap(userRepository::save)
-                .map(user -> ResponseEntity.status(202).build())
-                .defaultIfEmpty(ResponseEntity.status(409).build());
+            .flatMap(user -> user.getEmailVerified() ? Mono.empty() : Mono.just(user))
+            .doOnNext(user -> user.setEmailVerified(true))
+            .flatMap(userRepository::save)
+            .map(user -> ResponseEntity.status(202).build())
+            .defaultIfEmpty(ResponseEntity.status(409).build());
     }
 
     @PostMapping("/refresh")

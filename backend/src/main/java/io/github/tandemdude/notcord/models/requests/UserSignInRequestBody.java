@@ -6,6 +6,8 @@ import javax.validation.constraints.NotNull;
 
 @Data
 public class UserSignInRequestBody {
-    @NotNull private String email;
-    @NotNull private String password;
+    @NotNull
+    private String email;
+    @NotNull
+    private String password;
 }

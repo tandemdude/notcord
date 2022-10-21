@@ -8,5 +8,6 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface Oauth2TokenPairRepository extends ReactiveCrudRepository<Oauth2TokenPair, String> {
     Mono<Oauth2TokenPair> findByRefreshToken(String refreshToken);
+
     Mono<Oauth2TokenPair> findByAccessToken(String accessToken);
 }
