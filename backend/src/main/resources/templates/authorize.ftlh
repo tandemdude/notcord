@@ -16,8 +16,28 @@
         <div class="absolute -bottom-12 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 -z-10"></div>
         <div class="space-y-6 relative">
             <div>
-                <h5 class="text-xl font-medium text-white">${appName}</h5>
-                <h5 class="text-md font-medium text-gray-300">is requesting access to your account</h5>
+                <div class="flex justify-center pb-4">
+                    <div class="flex flex-col mx-4 py-2">
+                        ${userIcon?no_esc}
+                        <h5 class="text-xl font-medium text-white">${userName}</h5>
+                    </div>
+                    <div class="flex my-auto mx-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="32" height="32"
+                             viewBox="0 0 41.915 41.916" xml:space="preserve" fill="#666f78" class="animate-pulse">
+                            <g>
+                                <path d="M11.214,20.956c0,3.091-2.509,5.589-5.607,5.589C2.51,26.544,0,24.046,0,20.956c0-3.082,2.511-5.585,5.607-5.585 C8.705,15.371,11.214,17.874,11.214,20.956z"/>
+                                <path d="M26.564,20.956c0,3.091-2.509,5.589-5.606,5.589c-3.097,0-5.607-2.498-5.607-5.589c0-3.082,2.511-5.585,5.607-5.585 C24.056,15.371,26.564,17.874,26.564,20.956z"/>
+                                <path d="M41.915,20.956c0,3.091-2.509,5.589-5.607,5.589c-3.097,0-5.606-2.498-5.606-5.589c0-3.082,2.511-5.585,5.606-5.585 C39.406,15.371,41.915,17.874,41.915,20.956z"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col mx-4 py-2">
+                        ${appIcon?no_esc}
+                        <h5 class="text-xl font-medium text-white">${appName}</h5>
+                    </div>
+                </div>
+                <h5 class="text-md font-medium text-gray-300 text-center">${appName} is requesting access to your
+                    account</h5>
             </div>
             <hr class="w-full border-gray-700 m-auto">
             <div class="text-white">

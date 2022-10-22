@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -74,13 +75,12 @@ public class Oauth2FlowController {
                     if (state != null) {
                         claims = Map.of(
                             "clientId", clientId, "redirectUri", redirectUri,
-                            "scope", scopeBitfield, "state", state, "appName", client.getAppName()
+                            "scope", scopeBitfield, "state", state
                         );
                     }
                     else {
                         claims = Map.of(
-                            "clientId", clientId, "redirectUri", redirectUri,
-                            "scope", scopeBitfield, "appName", client.getAppName()
+                            "clientId", clientId, "redirectUri", redirectUri, "scope", scopeBitfield
                         );
                     }
                     return jwtUtil.generateToken(claims, 60 * 60 * 15);
@@ -124,25 +124,33 @@ public class Oauth2FlowController {
     }
 
     @GetMapping("/prompt/{token}")
-    public String displayConsentScreen(@PathVariable String token, @RequestParam String userToken, Model model) {
-        var maybeToken = jwtUtil.parseToken(token);
-        if (maybeToken.isEmpty()) {
-            return "redirect:http://localhost:3000/404";
+    public Mono<String> displayConsentScreen(@PathVariable String token, @RequestParam String userToken, Model model) {
+        var maybeClaims = jwtUtil.parseToken(token);
+        if (maybeClaims.isEmpty()) {
+            return Mono.just("redirect:http://localhost:3000/404");
         }
 
         var allowToken = jwtUtil.generateToken(Map.of("inner", token, "consent", "allow"), 60 * 15);
         var denyToken = jwtUtil.generateToken(Map.of("inner", token, "consent", "deny"), 60 * 15);
 
-        var decoded = maybeToken.get();
+        var claims = maybeClaims.get();
         model.addAttribute("userToken", userToken);
         model.addAttribute("allowToken", allowToken);
         model.addAttribute("denyToken", denyToken);
-        model.addAttribute("appName", decoded.get("appName"));
-        model.addAttribute("scopes", Scope.scopesFromBitfield(forceLong(decoded.get("scope"))));
-        model.addAttribute("redirectUri", decoded.get("redirectUri"));
-        model.addAttribute("appName", decoded.get("appName"));
+        model.addAttribute("scopes", Scope.scopesFromBitfield(forceLong(claims.get("scope"))));
+        model.addAttribute("redirectUri", claims.get("redirectUri"));
 
-        return "authorize";
+        var maybeUserClaims = jwtUtil.parseToken(userToken);
+        var userClaims = maybeUserClaims.orElse(Collections.emptyMap());
+
+        return userRepository.findById((String) userClaims.get("userId"))
+            .doOnNext(user -> model.addAttribute("userIcon", user.getDefaultAvatarSvg()))
+            .doOnNext(user -> model.addAttribute("userName", user.getUsername()))
+            .flatMap(unused -> oauth2CredentialsRepository.findById((String) claims.get("clientId")))
+            .doOnNext(creds -> model.addAttribute("appIcon", creds.getDefaultIconSvg()))
+            .doOnNext(creds -> model.addAttribute("appName", creds.getAppName()))
+            .map(unused -> "authorize")
+            .defaultIfEmpty("redirect:http://localhost:3000/404");  // User token or prompt token is unrecognised
     }
 
     @GetMapping("/complete")
