@@ -1,6 +1,6 @@
 package io.github.tandemdude.notcord.rest.services;
 
-import io.github.tandemdude.notcord.exceptions.ExceptionFactory;
+import io.github.tandemdude.notcord.exceptions.HttpExceptionFactory;
 import io.github.tandemdude.notcord.models.db.Oauth2TokenPair;
 import io.github.tandemdude.notcord.models.db.User;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
@@ -67,16 +67,16 @@ public class Oauth2AuthorizerService {
     public Mono<Oauth2TokenPair> extractTokenPair(String token) {
         var parts = token.split(" ");
         if (parts.length != 2) {
-            return Mono.error(ExceptionFactory::tokenFormatInvalidException);
+            return Mono.error(HttpExceptionFactory::tokenFormatInvalidException);
         }
         var tokenType = parts[0];
         var tokenString = parts[1];
 
         return oauth2TokenPairRepository.findByAccessToken(tokenString)
-            .switchIfEmpty(Mono.error(ExceptionFactory::invalidTokenException))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::invalidTokenException))
             .filter(pair -> pair.getType().equals(tokenType))
-            .switchIfEmpty(Mono.error(ExceptionFactory::invalidTokenException))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::invalidTokenException))
             .filter(pair -> Instant.now().isBefore(pair.getExpiresAt()))
-            .switchIfEmpty(Mono.error(ExceptionFactory::invalidTokenException));
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::invalidTokenException));
     }
 }

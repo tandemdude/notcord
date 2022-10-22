@@ -3,7 +3,7 @@ package io.github.tandemdude.notcord.exceptions;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-public class ExceptionFactory {
+public class HttpExceptionFactory {
     public static ResponseStatusException tokenFormatInvalidException() {
         return new ResponseStatusException(
             HttpStatus.UNAUTHORIZED,

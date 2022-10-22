@@ -1,6 +1,6 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
-import io.github.tandemdude.notcord.exceptions.ExceptionFactory;
+import io.github.tandemdude.notcord.exceptions.HttpExceptionFactory;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.responses.UserResponse;
 import io.github.tandemdude.notcord.repositories.UserRepository;
@@ -28,9 +28,9 @@ public class UserController {
     ) {
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
-            .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .flatMap(unused -> userRepository.findById(userId))
-            .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
             .map(UserResponse::from)
             .map(ResponseEntity::ok);
     }

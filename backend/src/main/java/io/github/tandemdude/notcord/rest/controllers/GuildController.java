@@ -1,6 +1,6 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
-import io.github.tandemdude.notcord.exceptions.ExceptionFactory;
+import io.github.tandemdude.notcord.exceptions.HttpExceptionFactory;
 import io.github.tandemdude.notcord.models.db.Channel;
 import io.github.tandemdude.notcord.models.db.Guild;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
@@ -42,7 +42,7 @@ public class GuildController {
     ) {
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))  // Do we want bots to be able to do this?
-            .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .map(pair -> new Guild(pair.getUserId(), body.getName()))
             .flatMap(guildRepository::save)
             .map(GuildResponse::from)
@@ -56,10 +56,10 @@ public class GuildController {
     ) {
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT, Scope.GUILDS_READ))
-            .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .flatMap(pair -> guildRepository
                 .findById(guildId)  // TODO - Filter to check if owner of token has permission to read this specific guild
-                .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist"))))
+                .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist"))))
             .map(GuildResponse::from)
             .map(ResponseEntity::ok);
     }
@@ -72,12 +72,12 @@ public class GuildController {
     ) {
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))
-            .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .flatMap(pair -> guildRepository
                 .findById(guildId)
-                .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
+                .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
                 .filter(guild -> guild.getOwnerId().equals(pair.getUserId()))
-                .switchIfEmpty(Mono.error(ExceptionFactory::missingRequiredPermissionsException)))
+                .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException)))
             .flatMap(guild -> guildRepository.delete(guild).thenReturn(ResponseEntity.noContent().build()));
     }
 
@@ -89,7 +89,7 @@ public class GuildController {
         // TODO - authorization
         return guildRepository.existsById(guildId)
             .flatMap(exists -> exists ? Mono.just(body) : Mono.empty())
-            .switchIfEmpty(Mono.error(() -> ExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
             .map(rb -> new Channel(rb.getType(), guildId, rb.getName()))
             .flatMap(channelRepository::save)
             .map(ChannelResponse::from)
