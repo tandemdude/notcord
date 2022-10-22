@@ -12,7 +12,8 @@ public class ChannelResponse {
     private final String name;
 
     public static ChannelResponse from(Channel channel) {
-        return new ChannelResponse(channel.getId(),
+        return new ChannelResponse(
+            channel.getId(),
             channel.getType().getValue(),
             channel.getGuildId(),
             channel.getName()

@@ -4,11 +4,11 @@ import java.util.List;
 
 public class DefaultAvatarGenerator {
     private static final List<List<String>> colourPalettes = List.of(
-            List.of("#E6B39A","#E6CBA5","#EDE3B4","#8B9E9B","#6D7578"),
-            List.of("#EC4B59","#9A2848","#130716","#FC8C77","#F8DFBD"),
-            List.of("#E8D7A9","#8EAA94","#6B666D","#6C3751","#52223C"),
-            List.of("#21203F","#FFF1CE","#E7BFA5","#C5A898","#4B3C5D")
-//            "420B58,FC036C,F1A20B,8D9C09,08807B"  // this palette is very exotic - maybe too bright
+        List.of("#E6B39A", "#E6CBA5", "#EDE3B4", "#8B9E9B", "#6D7578"),
+        List.of("#EC4B59", "#9A2848", "#130716", "#FC8C77", "#F8DFBD"),
+        List.of("#E8D7A9", "#8EAA94", "#6B666D", "#6C3751", "#52223C"),
+        List.of("#21203F", "#FFF1CE", "#E7BFA5", "#C5A898", "#4B3C5D")
+        //            "420B58,FC036C,F1A20B,8D9C09,08807B"  // this palette is very exotic - maybe too bright
     );
 
     private static List<String> getPalette(int number) {
@@ -21,7 +21,7 @@ public class DefaultAvatarGenerator {
 
     private static int hashCodeOf(String value) {
         var code = 0;
-        for (char c: value.toCharArray()) {
+        for (char c : value.toCharArray()) {
             code = ((code << 5) - code) + c;
             code &= code;
         }
@@ -81,7 +81,7 @@ public class DefaultAvatarGenerator {
         var isCircle = getBoolean(nameHashCode, 1);
 
         return String.format(
-                """
+            """
                 <svg viewBox="0 0 36 36" fill="none" role="img" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
                     <title>%s</title>
                     <mask id="mask__beam" maskUnits="userSpaceOnUse" x="0" y="0" width="36" height="36">
@@ -98,19 +98,19 @@ public class DefaultAvatarGenerator {
                     </g>
                 </svg>
                 """,
-                username,
-                backgroundColour,
-                wrapperTranslateX, wrapperTranslateY, wrapperRotate, wrapperScale, wrapperColour,
-                isCircle ? 36 : 6,
-                faceTranslateX, faceTranslateY, faceRotate,
-                mouthOpen ? String.format(
-                        """
-                        <path d="M15 %sc2 1 4 1 6 0" stroke="%s" fill="none" stroke-linecap="round"></path>
-                        """, 19 + mouthSpread, faceColour) : String.format(
-                        """
-                        <path d="M13 %sa1,0.75 0 0,0 10,0" fill="%s"></path>
-                        """, 19 + mouthSpread, faceColour),
-                14 - eyeSpread, faceColour, 20 + eyeSpread, faceColour
+            username,
+            backgroundColour,
+            wrapperTranslateX, wrapperTranslateY, wrapperRotate, wrapperScale, wrapperColour,
+            isCircle ? 36 : 6,
+            faceTranslateX, faceTranslateY, faceRotate,
+            mouthOpen ? String.format(
+                """
+                    <path d="M15 %sc2 1 4 1 6 0" stroke="%s" fill="none" stroke-linecap="round"></path>
+                    """, 19 + mouthSpread, faceColour) : String.format(
+                """
+                    <path d="M13 %sa1,0.75 0 0,0 10,0" fill="%s"></path>
+                    """, 19 + mouthSpread, faceColour),
+            14 - eyeSpread, faceColour, 20 + eyeSpread, faceColour
         ).replace("\n", "").replace("    ", "");
     }
 
@@ -136,7 +136,7 @@ public class DefaultAvatarGenerator {
         var e3_rotate = getUnit(nameHashCode * 4, 360, null);
 
         return String.format(
-                """
+            """
                 <svg viewBox="0 0 80 80" fill="none" role="img" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
                     <title>%s</title>
                     <mask id="mask__bauhaus" maskUnits="userSpaceOnUse" x="0" y="0" width="80" height="80">
@@ -150,7 +150,7 @@ public class DefaultAvatarGenerator {
                     </g>
                 </svg>
                 """, appName, e0_color, e1_isSquare ? 80 : 10, e1_color, e1_translateX, e1_translateY, e1_rotate,
-                e2_color, e2_translateX, e2_translateY, e3_color, e3_translateX, e3_translateY, e3_rotate
+            e2_color, e2_translateX, e2_translateY, e3_color, e3_translateX, e3_translateY, e3_rotate
         ).replace("\n", "").replace("    ", "");
     }
 }

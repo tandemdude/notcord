@@ -5,7 +5,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 public class ExceptionFactory {
     public static ResponseStatusException tokenFormatInvalidException() {
-        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token format is invalid - must match: '<type> <token>'");
+        return new ResponseStatusException(
+            HttpStatus.UNAUTHORIZED,
+            "Token format is invalid - must match: '<type> <token>'"
+        );
     }
 
     public static ResponseStatusException invalidTokenException() {
@@ -13,7 +16,10 @@ public class ExceptionFactory {
     }
 
     public static ResponseStatusException missingRequiredPermissionsException() {
-        return new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to access the requested resource");
+        return new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "You do not have permission to access the requested resource"
+        );
     }
 
     public static ResponseStatusException resourceNotFoundException(String details) {

@@ -25,7 +25,16 @@ public class Oauth2TokenPair implements Persistable<String> {
     @Nullable
     private String clientId;
 
-    public Oauth2TokenPair(String type, String accessToken, String refreshToken, Instant expiresAt, long expiresIn, String userId, long scope, String clientId) {
+    public Oauth2TokenPair(
+        String type,
+        String accessToken,
+        String refreshToken,
+        Instant expiresAt,
+        long expiresIn,
+        String userId,
+        long scope,
+        String clientId
+    ) {
         this.type = type;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
