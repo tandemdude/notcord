@@ -19,7 +19,7 @@
                 <div class="flex justify-center pb-4">
                     <div class="flex flex-col mx-4 py-2">
                         ${userIcon?no_esc}
-                        <h5 class="text-xl font-medium text-white">${userName}</h5>
+                        <h5 class="text-base font-medium text-gray-300 text-center pt-2">${userName}</h5>
                     </div>
                     <div class="flex my-auto mx-4">
                         <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="32" height="32"
@@ -33,11 +33,11 @@
                     </div>
                     <div class="flex flex-col mx-4 py-2">
                         ${appIcon?no_esc}
-                        <h5 class="text-xl font-medium text-white">${appName}</h5>
+                        <h5 class="text-base font-medium text-gray-300 text-center pt-2">${appName}</h5>
                     </div>
                 </div>
-                <h5 class="text-md font-medium text-gray-300 text-center">${appName} is requesting access to your
-                    account</h5>
+                <h5 class="text-md font-medium text-gray-300 text-center"><span class="text-white">${appName}</span> is
+                    requesting access to your account</h5>
             </div>
             <hr class="w-full border-gray-700 m-auto">
             <div class="text-white">
