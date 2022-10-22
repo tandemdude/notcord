@@ -16,8 +16,8 @@
         <div class="absolute -bottom-12 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 -z-10"></div>
         <div class="space-y-6 relative">
             <div>
-                <div class="flex justify-center pb-4">
-                    <div class="flex flex-col mx-4 py-2">
+                <div class="flex justify-center mb-4">
+                    <div class="flex flex-col mx-4 my-2">
                         ${userIcon?no_esc}
                         <h5 class="text-base font-medium text-gray-300 text-center pt-2">${userName}</h5>
                     </div>
@@ -31,13 +31,17 @@
                             </g>
                         </svg>
                     </div>
-                    <div class="flex flex-col mx-4 py-2">
+                    <div class="flex flex-col mx-4 my-2">
                         ${appIcon?no_esc}
                         <h5 class="text-base font-medium text-gray-300 text-center pt-2">${appName}</h5>
                     </div>
                 </div>
                 <h5 class="text-md font-medium text-gray-300 text-center"><span class="text-white">${appName}</span> is
                     requesting access to your account</h5>
+                <div class="flex text-gray-500 text-center pt-2 text-xs justify-center">
+                    <p>Logged in as <span class="text-gray-300">${userName}</span>.&nbsp;</p>
+                    <a class="text-indigo-500 hover:underline cursor-pointer" href="${appBaseUrl}/logout">Not you?</a>
+                </div>
             </div>
             <hr class="w-full border-gray-700 m-auto">
             <div class="text-white">
