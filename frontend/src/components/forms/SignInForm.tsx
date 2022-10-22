@@ -51,13 +51,13 @@ export default function SignInForm({setShowSignUp, setSignedIn, setContext}) {
                 <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-300">Email</label>
                 <input id="email" name="email" type="email" onChange={formik.handleChange}
                        value={formik.values.email} placeholder="name@notcord.io" required={true}
-                       className="border text-sm rounded-lg block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white"/>
+                       className="border text-sm rounded-lg block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white outline-none"/>
             </div>
             <div>
                 <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-300">Password</label>
                 <input id="password" name="password" type="password" onChange={formik.handleChange}
                        value={formik.values.password} placeholder="••••••••" required={true}
-                       className="border text-sm rounded-lg block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white"/>
+                       className="border text-sm rounded-lg block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white outline-none"/>
                 {incorrectCredentials ?
                     <p id="incorrect-credentials-alert" className="text-rose-400 text-xs">Password is incorrect,
                         or an account with the given email does not exist</p> : null}
