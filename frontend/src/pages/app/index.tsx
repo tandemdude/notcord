@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import AuthenticationView from "../../components/views/AuthenticationView";
 import AppView from "../../components/views/AppView";
-import {retrieveCredentials} from "../../utils/credentials";
+import { retrieveCredentials } from "../../utils/credentials";
 
 export default function App() {
     const [signedIn, setSignedIn] = useState(false);

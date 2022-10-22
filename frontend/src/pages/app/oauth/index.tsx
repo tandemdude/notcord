@@ -1,6 +1,6 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import SignInForm from "../../../components/forms/SignInForm";
-import {retrieveCredentials} from "../../../utils/credentials";
+import { retrieveCredentials } from "../../../utils/credentials";
 import Card from "../../../components/Card";
 
 function handleReturn(returnTo: string, accessToken: string): boolean {
@@ -35,7 +35,7 @@ export default function Oauth(): JSX.Element {
         if (!returned) {
             window.location.href = "/404";
         }
-    }, [])
+    }, []);
 
     useEffect(() => {
         if (signedIn === false) {
@@ -49,13 +49,13 @@ export default function Oauth(): JSX.Element {
         if (!returned) {
             window.location.href = "/404";
         }
-    }, [signedIn])
+    }, [signedIn]);
 
     // Display sign-in if credentials are not available
     return (
-            <Card>
-                {showSignIn ? <SignInForm setShowSignUp={(_) => {
-                }} setSignedIn={setSignedIn} setContext={setContext}/> : <p>Loading</p>}
-            </Card>
+        <Card>
+            {showSignIn ? <SignInForm setShowSignUp={(_) => {
+            }} setSignedIn={setSignedIn} setContext={setContext}/> : <p>Loading</p>}
+        </Card>
     );
 }
