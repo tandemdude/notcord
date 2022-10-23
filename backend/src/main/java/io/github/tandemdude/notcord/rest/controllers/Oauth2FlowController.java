@@ -67,8 +67,8 @@ public class Oauth2FlowController {
                     .body(new DefaultErrorResponse("invalid_scope", "One or more scopes were not recognised")));
             }
 
-            return oauth2CredentialsRepository.findById(clientId).flatMap(client -> client.getRedirectUri()
-                .equals(redirectUri) ? Mono.just(client) : Mono.empty()).map(client -> {
+            return oauth2CredentialsRepository.findById(clientId).filter(client -> client.getRedirectUri()
+                .equals(redirectUri)).map(client -> {
                 Map<String, Object> claims;
                 var scopeBitfield = Scope.bitfieldFromScopes(Arrays.asList(scope.split(" ")));
                 if (state != null) {
