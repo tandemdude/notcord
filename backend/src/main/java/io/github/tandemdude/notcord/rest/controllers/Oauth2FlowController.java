@@ -67,35 +67,33 @@ public class Oauth2FlowController {
                     .body(new DefaultErrorResponse("invalid_scope", "One or more scopes were not recognised")));
             }
 
-            return oauth2CredentialsRepository.findById(clientId)
-                .flatMap(client -> client.getRedirectUri().equals(redirectUri) ? Mono.just(client) : Mono.empty())
-                .map(client -> {
-                    Map<String, Object> claims;
-                    var scopeBitfield = Scope.bitfieldFromScopes(Arrays.asList(scope.split(" ")));
-                    if (state != null) {
-                        claims = Map.of(
-                            "clientId", clientId, "redirectUri", redirectUri,
-                            "scope", scopeBitfield, "state", state
-                        );
-                    }
-                    else {
-                        claims = Map.of(
-                            "clientId", clientId, "redirectUri", redirectUri, "scope", scopeBitfield
-                        );
-                    }
-                    return jwtUtil.generateToken(claims, 60 * 60 * 15);
-                })
-                .map(token -> ResponseEntity.status(302)
-                    .header(
-                        "Location",
-                        "http://localhost:3000/app/oauth?returnTo=http://localhost:8080/oauth/prompt/" + token
-                    )
-                    .build())
-                .defaultIfEmpty(ResponseEntity.badRequest()
-                    .body(new DefaultErrorResponse(
-                        "invalid_request",
-                        "The 'redirect_uri' parameter is invalid"
-                    )));
+            return oauth2CredentialsRepository.findById(clientId).flatMap(client -> client.getRedirectUri()
+                .equals(redirectUri) ? Mono.just(client) : Mono.empty()).map(client -> {
+                Map<String, Object> claims;
+                var scopeBitfield = Scope.bitfieldFromScopes(Arrays.asList(scope.split(" ")));
+                if (state != null) {
+                    claims = Map.of(
+                        "clientId",
+                        clientId,
+                        "redirectUri",
+                        redirectUri,
+                        "scope",
+                        scopeBitfield,
+                        "state",
+                        state
+                    );
+                }
+                else {
+                    claims = Map.of("clientId", clientId, "redirectUri", redirectUri, "scope", scopeBitfield);
+                }
+                return jwtUtil.generateToken(claims, 60 * 60 * 15);
+            }).map(token -> ResponseEntity.status(302)
+                .header(
+                    "Location",
+                    "http://localhost:3000/app/oauth?returnTo=http://localhost:8080/oauth/prompt/" + token
+                )
+                .build()).defaultIfEmpty(ResponseEntity.badRequest()
+                .body(new DefaultErrorResponse("invalid_request", "The 'redirect_uri' parameter is invalid")));
         }
         return Mono.just(ResponseEntity.status(400)
             .body(new DefaultErrorResponse(
@@ -112,15 +110,14 @@ public class Oauth2FlowController {
         @RequestParam(value = "scope", required = false, defaultValue = "identity.read") String scope,
         @RequestParam(value = "state", required = false) String state
     ) {
-        return oauth2CredentialsRepository.existsById(clientId)
-            .flatMap(exists -> exists ? handleResponseTypes(
-                responseType,
-                clientId,
-                redirectUri,
-                scope,
-                state
-            ) : Mono.just(ResponseEntity.status(400)
-                .body(new DefaultErrorResponse("invalid_request", "The 'client_id' parameter is invalid"))));
+        return oauth2CredentialsRepository.existsById(clientId).flatMap(exists -> exists ? handleResponseTypes(
+            responseType,
+            clientId,
+            redirectUri,
+            scope,
+            state
+        ) : Mono.just(ResponseEntity.status(400)
+            .body(new DefaultErrorResponse("invalid_request", "The 'client_id' parameter is invalid"))));
     }
 
     @GetMapping("/prompt/{token}")
@@ -203,39 +200,35 @@ public class Oauth2FlowController {
 
         // Access has been granted, so we return a code which can be exchanged for tokens later
         return oauth2AuthorizationCodeRepository.save(new Oauth2AuthorizationCode(
-                (String) userTokenClaims.get("userId"),
-                (String) innerClaims.get("clientId"),
-                forceLong(innerClaims.get("scope"))
-            ))
-            .map(code -> {
-                redirectUriBuilder.queryParam("code", code.getCode());
-                if (innerClaims.get("state") != null) {
-                    redirectUriBuilder.queryParam("state", innerClaims.get("state"));
-                }
-                return redirectUriBuilder.build();
-            })
-            .map(url -> "redirect:" + url);
+            (String) userTokenClaims.get("userId"),
+            (String) innerClaims.get("clientId"),
+            forceLong(innerClaims.get("scope"))
+        )).map(code -> {
+            redirectUriBuilder.queryParam("code", code.getCode());
+            if (innerClaims.get("state") != null) {
+                redirectUriBuilder.queryParam("state", innerClaims.get("state"));
+            }
+            return redirectUriBuilder.build();
+        }).map(url -> "redirect:" + url);
     }
 
     @Transactional
     public Mono<ResponseEntity<Object>> handleGrantTypes(Oauth2TokenRequestBody body) {
-        if ("authorization_code".equals(body.getGrantType())) {
-            return oauth2AuthorizationCodeRepository.findByCodeAndClientId(body.getCode(), body.getClientId())
+        if ("authorization_code".equals(body.getGrant_type())) {
+            return oauth2AuthorizationCodeRepository.findByCodeAndClientId(body.getCode(), body.getClient_id())
                 .switchIfEmpty(Mono.error(AuthorizationCodeDoesNotExistException::new))
                 // Check if code has expired
                 .filter(code -> Instant.now().isBefore(code.getExpiresAt()))
                 .switchIfEmpty(Mono.error(AuthorizationCodeExpiredException::new))
-                .flatMap(code -> oauth2CredentialsRepository
-                    .findById(code.getClientId())
+                .flatMap(code -> oauth2CredentialsRepository.findById(code.getClientId())
                     // Check that the provided client secret matches the one for the code's client ID
-                    .filter(creds -> creds.getClientSecret().equals(body.getClientSecret()))
+                    .filter(creds -> creds.getClientSecret().equals(body.getClient_secret()))
                     .switchIfEmpty(Mono.error(CredentialsDoNotMatchException::new))
                     // Check that the provided redirect URI matches the one for the code's client ID
                     .flatMap(creds -> creds.getRedirectUri()
-                        .equals(body.getRedirectUri()) ? Mono.just(code) : Mono.empty())
+                        .equals(body.getRedirect_uri()) ? Mono.just(code) : Mono.empty())
                     .switchIfEmpty(Mono.error(RedirectUriIncorrectException::new)))
-                .flatMap(code -> userRepository
-                    .findById(code.getUserId())
+                .flatMap(code -> userRepository.findById(code.getUserId())
                     // Issue new access token and refresh token pair
                     .flatMap(user -> oauth2AuthorizerService.generateTokenPair(
                         user,
@@ -247,24 +240,22 @@ public class Oauth2FlowController {
                     .flatMap(pair -> oauth2AuthorizationCodeRepository.delete(code).thenReturn(pair)))
                 .map(pair -> ResponseEntity.ok(Oauth2TokenResponse.from(pair)));
         }
-        else if ("refresh_token".equals(body.getGrantType())) {
-            return oauth2TokenPairRepository.findByRefreshToken(body.getRefreshToken())
+        else if ("refresh_token".equals(body.getGrant_type())) {
+            return oauth2TokenPairRepository.findByRefreshToken(body.getRefresh_token())
                 .switchIfEmpty(Mono.error(RefreshTokenDoesNotExistException::new))
                 // Check if refresh token has expired
                 .filter(pair -> jwtUtil.parseToken(pair.getRefreshToken()).isPresent())
                 .switchIfEmpty(Mono.error(RefreshTokenExpiredException::new))
                 // Check that the provided client ID matches the one for the token pair
-                .filter(pair -> Objects.equals(pair.getClientId(), body.getClientId()))
+                .filter(pair -> Objects.equals(pair.getClientId(), body.getClient_id()))
                 .switchIfEmpty(Mono.error(RefreshTokenDoesNotExistException::new))
-                .flatMap(pair -> oauth2CredentialsRepository
-                    .findById(body.getClientId())
+                .flatMap(pair -> oauth2CredentialsRepository.findById(body.getClient_id())
                     // Check that the provided client secret matches the one for the token pair's client ID
-                    .filter(creds -> creds.getClientSecret().equals(body.getClientSecret()))
+                    .filter(creds -> creds.getClientSecret().equals(body.getClient_secret()))
                     .switchIfEmpty(Mono.error(CredentialsDoNotMatchException::new))
                     // We don't actually need to know the credentials, so we just return out the original token pair again
                     .map(creds -> pair))
-                .flatMap(pair -> userRepository
-                    .findById(pair.getUserId())
+                .flatMap(pair -> userRepository.findById(pair.getUserId())
                     // Issue new access token and refresh token pair
                     .flatMap(user -> oauth2AuthorizerService.generateTokenPair(
                         user,
@@ -280,30 +271,48 @@ public class Oauth2FlowController {
         return Mono.just(ResponseEntity.status(400)
             .body(new DefaultErrorResponse(
                 "unsupported_grant_type",
-                "Grant type '" + body.getGrantType() + "' is not permitted"
+                "Grant type '" + body.getGrant_type() + "' is not permitted"
             )));
     }
 
-    @PostMapping(value = "/token", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public Mono<ResponseEntity<Object>> oauth2Token(@Valid @RequestBody Oauth2TokenRequestBody body) {
+    @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public Mono<ResponseEntity<Object>> oauth2Token(@Valid Oauth2TokenRequestBody body) {
         return handleGrantTypes(body)
             // Handle errors that could have been caused during authorization code token grant
-            .onErrorReturn(AuthorizationCodeDoesNotExistException.class, ResponseEntity.status(400)
-                .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid")))
-            .onErrorReturn(AuthorizationCodeExpiredException.class, ResponseEntity.status(400)
-                .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid")))
-            .onErrorReturn(CredentialsDoNotMatchException.class, ResponseEntity.status(401)
-                .body(new DefaultErrorResponse(
-                    "invalid_client",
-                    "The provided 'client_id' and 'client_secret' combination is invalid"
-                )))
-            .onErrorReturn(RedirectUriIncorrectException.class, ResponseEntity.status(400)
-                .body(new DefaultErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid")))
+            .onErrorReturn(
+                AuthorizationCodeDoesNotExistException.class,
+                ResponseEntity.status(400)
+                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid"))
+            )
+            .onErrorReturn(
+                AuthorizationCodeExpiredException.class,
+                ResponseEntity.status(400)
+                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid"))
+            )
+            .onErrorReturn(
+                CredentialsDoNotMatchException.class,
+                ResponseEntity.status(401)
+                    .body(new DefaultErrorResponse(
+                        "invalid_client",
+                        "The provided 'client_id' and 'client_secret' combination is invalid"
+                    ))
+            )
+            .onErrorReturn(
+                RedirectUriIncorrectException.class,
+                ResponseEntity.status(400)
+                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid"))
+            )
             // Handle errors that could have been caused during refresh token grant
-            .onErrorReturn(RefreshTokenDoesNotExistException.class, ResponseEntity.status(400)
-                .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
-            .onErrorReturn(RefreshTokenExpiredException.class, ResponseEntity.status(400)
-                .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid")))
+            .onErrorReturn(
+                RefreshTokenDoesNotExistException.class,
+                ResponseEntity.status(400)
+                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid"))
+            )
+            .onErrorReturn(
+                RefreshTokenExpiredException.class,
+                ResponseEntity.status(400)
+                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid"))
+            )
             // If for some reason some other error was thrown, or we still have an empty mono
             .defaultIfEmpty(ResponseEntity.internalServerError().build());
     }
