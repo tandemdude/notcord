@@ -45,8 +45,8 @@
             </div>
             <hr class="w-full border-gray-700 m-auto">
             <div class="text-white">
-                <p class="block mb-2 text-md font-medium text-gray-300">This will allow ${appName} to:</p>
-                <div class="grid grid-cols-2 text-sm">
+                <p class="block mb-2 text-md font-medium text-white">This will allow ${appName} to:</p>
+                <div class="grid text-sm text-gray-300">
                     <ul>
                         <#list scopes as scope>
                             <li><span class="text-indigo-500">•</span> ${scope}</li>

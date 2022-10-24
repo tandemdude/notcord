@@ -134,9 +134,15 @@ public class Oauth2FlowController {
         model.addAttribute("userToken", userToken);
         model.addAttribute("allowToken", allowToken);
         model.addAttribute("denyToken", denyToken);
-        model.addAttribute("scopes", Scope.scopesFromBitfield(forceLong(claims.get("scope"))));
         model.addAttribute("redirectUri", claims.get("redirectUri"));
         model.addAttribute("appBaseUrl", "http://localhost:3000/app");
+
+        var requestedScopes = forceLong(claims.get("scope"));
+        model.addAttribute("scopes", Scope.getScopeDescriptionMap().entrySet().stream()
+            .filter(entry -> (entry.getKey() & requestedScopes) == entry.getKey())
+            .map(Map.Entry::getValue)
+            .toList()
+        );
 
         var maybeUserClaims = jwtUtil.parseToken(userToken);
         var userClaims = maybeUserClaims.orElse(Collections.emptyMap());

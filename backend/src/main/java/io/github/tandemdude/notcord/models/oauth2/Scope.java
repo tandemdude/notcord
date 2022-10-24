@@ -16,6 +16,12 @@ public class Scope {
     public static final long GUILDS_MEMBER_READ = 1 << 5;
 
     @Getter
+    private static final Map<Long, String> scopeDescriptionMap = Map.of(
+        USER, "???", BOT, "???", IDENTITY_READ, "Read your username and avatar", GUILDS_READ, "See which guilds you are in",
+        GUILDS_JOIN, "Join guilds on your behalf", GUILDS_MEMBER_READ, "Read your nickname, roles, and permissions in the guilds you are in"
+    );
+
+    @Getter
     private static final Map<Long, String> scopeNameMap = Map.of(
         USER, "user", BOT, "bot", IDENTITY_READ, "identity.read",
         GUILDS_READ, "guilds.read", GUILDS_JOIN, "guilds.join", GUILDS_MEMBER_READ, "guilds.member.read"
