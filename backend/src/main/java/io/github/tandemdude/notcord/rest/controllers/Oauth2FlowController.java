@@ -1,5 +1,6 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
+import io.github.tandemdude.notcord.config.EndpointConfig;
 import io.github.tandemdude.notcord.exceptions.oauth.*;
 import io.github.tandemdude.notcord.models.db.Oauth2AuthorizationCode;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
@@ -36,6 +37,7 @@ public class Oauth2FlowController {
     private final Oauth2AuthorizerService oauth2AuthorizerService;
     private final UserRepository userRepository;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
+    private final EndpointConfig endpointConfig;
     private final JwtUtil jwtUtil;
 
     public Oauth2FlowController(
@@ -44,6 +46,7 @@ public class Oauth2FlowController {
         Oauth2AuthorizerService oauth2AuthorizerService,
         UserRepository userRepository,
         Oauth2TokenPairRepository oauth2TokenPairRepository,
+        EndpointConfig endpointConfig,
         JwtUtil jwtUtil
     ) {
         this.oauth2AuthorizationCodeRepository = oauth2AuthorizationCodeRepository;
@@ -51,6 +54,7 @@ public class Oauth2FlowController {
         this.oauth2AuthorizerService = oauth2AuthorizerService;
         this.userRepository = userRepository;
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
+        this.endpointConfig = endpointConfig;
         this.jwtUtil = jwtUtil;
     }
 
@@ -90,7 +94,7 @@ public class Oauth2FlowController {
             }).map(token -> ResponseEntity.status(302)
                 .header(
                     "Location",
-                    "http://localhost:3000/app/oauth?returnTo=http://localhost:8080/oauth/prompt/" + token
+                    endpointConfig.cleanFrontendUrl() + "/app/oauth?returnTo=" + endpointConfig.cleanBackendUrl() + "/oauth/prompt/" + token
                 )
                 .build()).defaultIfEmpty(ResponseEntity.badRequest()
                 .body(new DefaultErrorResponse("invalid_request", "The 'redirect_uri' parameter is invalid")));
@@ -124,7 +128,7 @@ public class Oauth2FlowController {
     public Mono<String> displayConsentScreen(@PathVariable String token, @RequestParam String userToken, Model model) {
         var maybeClaims = jwtUtil.parseToken(token);
         if (maybeClaims.isEmpty()) {
-            return Mono.just("redirect:http://localhost:3000/404");
+            return Mono.just("redirect:" + endpointConfig.frontend404Page());
         }
 
         var allowToken = jwtUtil.generateToken(Map.of("inner", token, "consent", "allow"), 60 * 15);
@@ -135,7 +139,7 @@ public class Oauth2FlowController {
         model.addAttribute("allowToken", allowToken);
         model.addAttribute("denyToken", denyToken);
         model.addAttribute("redirectUri", claims.get("redirectUri"));
-        model.addAttribute("appBaseUrl", "http://localhost:3000/app");
+        model.addAttribute("frontendBaseUrl", endpointConfig.cleanFrontendUrl());
 
         var requestedScopes = forceLong(claims.get("scope"));
         model.addAttribute("scopes", Scope.getScopeDescriptionMap().entrySet().stream()
@@ -154,7 +158,7 @@ public class Oauth2FlowController {
             .doOnNext(creds -> model.addAttribute("appIcon", creds.getDefaultIconSvg()))
             .doOnNext(creds -> model.addAttribute("appName", creds.getAppName()))
             .map(unused -> "authorize")
-            .defaultIfEmpty("redirect:http://localhost:3000/404");  // User token or prompt token is unrecognised
+            .defaultIfEmpty("redirect:" + endpointConfig.frontend404Page());  // User token or prompt token is unrecognised
     }
 
     @GetMapping("/complete")
@@ -162,20 +166,20 @@ public class Oauth2FlowController {
         var decodedMeta = jwtUtil.parseToken(token);
         if (decodedMeta.isEmpty()) {
             // Invalid token has been supplied
-            return Mono.just("redirect:http://localhost:3000/404");
+            return Mono.just("redirect:" + endpointConfig.frontend404Page());
         }
 
         var inner = jwtUtil.parseToken((String) decodedMeta.get().get("inner"));
         if (inner.isEmpty()) {
             // The token supplied was valid but not of the correct type
-            return Mono.just("redirect:http://localhost:3000/404");
+            return Mono.just("redirect:" + endpointConfig.frontend404Page());
         }
 
         var innerClaims = inner.get();
         if (!innerClaims.containsKey("redirectUri") || !innerClaims.containsKey("clientId") || !innerClaims.containsKey(
             "scope")) {
             // Inner token does not contain the required data
-            return Mono.just("redirect:http://localhost:3000/404");
+            return Mono.just("redirect:" + endpointConfig.frontend404Page());
         }
 
         var redirectUriBuilder = UriComponentsBuilder.fromUriString((String) innerClaims.get("redirectUri"));

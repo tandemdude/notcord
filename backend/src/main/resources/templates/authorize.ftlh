@@ -40,7 +40,7 @@
                     requesting access to your account</h5>
                 <div class="flex text-gray-500 text-center pt-2 text-xs justify-center">
                     <p>Logged in as <span class="text-gray-300">${userName}</span>.&nbsp;</p>
-                    <a class="text-indigo-500 hover:underline cursor-pointer" href="${appBaseUrl}/logout">Not you?</a>
+                    <a class="text-indigo-500 hover:underline cursor-pointer" href="${frontendBaseUrl}/app/logout">Not you?</a>
                 </div>
             </div>
             <hr class="w-full border-gray-700 m-auto">
@@ -59,7 +59,7 @@
                 <ul>
                     <li><span class="text-indigo-500">•</span> After you authorize, you will be redirected
                         to ${redirectUri}</li>
-                    <li><span class="text-indigo-500">•</span> The developer of ${appName}'s TOS and privacy policy
+                    <li><span class="text-indigo-500">•</span> The developer of <span class="text-gray-300">${appName}</span>'s TOS and privacy policy
                         apply to this app
                     </li>
                     <li><span class="text-indigo-500">•</span> This app cannot read or send messages on your behalf</li>

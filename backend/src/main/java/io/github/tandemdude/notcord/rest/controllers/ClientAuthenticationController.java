@@ -1,5 +1,6 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
+import io.github.tandemdude.notcord.config.EndpointConfig;
 import io.github.tandemdude.notcord.models.db.User;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.UserCreateRequestBody;
@@ -33,6 +34,7 @@ public class ClientAuthenticationController {
     private final JwtUtil jwtUtil;
     private final Oauth2AuthorizerService oauth2AuthorizerService;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
+    private final EndpointConfig endpointConfig;
 
     public ClientAuthenticationController(
         UserRepository userRepository,
@@ -40,7 +42,8 @@ public class ClientAuthenticationController {
         EmailSender emailSender,
         JwtUtil jwtUtil,
         Oauth2AuthorizerService oauth2AuthorizerService,
-        Oauth2TokenPairRepository oauth2TokenPairRepository
+        Oauth2TokenPairRepository oauth2TokenPairRepository,
+        EndpointConfig endpointConfig
     ) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
@@ -48,6 +51,7 @@ public class ClientAuthenticationController {
         this.jwtUtil = jwtUtil;
         this.oauth2AuthorizerService = oauth2AuthorizerService;
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
+        this.endpointConfig = endpointConfig;
     }
 
     public Mono<ResponseEntity<Void>> newUser(UserCreateRequestBody body) {
@@ -58,7 +62,7 @@ public class ClientAuthenticationController {
                 String content = "Hi " + body.getUsername() + "!\n\n"
                     + "Thanks for using NotCord - the crappy discord alternative.\n"
                     + "Next step is to verify your email address. Click the below link or paste it into a browser:\n\n"
-                    + "http://localhost:3000/app/verify-email?token=" + token + "\n\n"
+                    + endpointConfig.cleanFrontendUrl() + "/app/verify-email?token=" + token + "\n\n"
                     + "The link will expire in 2 hours.\n\n"
                     + "Cheers,\n"
                     + "thomm.o";
