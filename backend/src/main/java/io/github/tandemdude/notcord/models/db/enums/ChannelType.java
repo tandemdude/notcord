@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum ChannelType {
-    GUILD_TEXT(0);
+    DM(0),
+    GROUP_DM(1),
+    GUILD_TEXT(2);
 
     private static final Map<Integer, ChannelType> BY_VALUE = new HashMap<>();
 

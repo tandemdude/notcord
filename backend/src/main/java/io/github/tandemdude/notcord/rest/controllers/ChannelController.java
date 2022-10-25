@@ -18,10 +18,20 @@ public class ChannelController {
         this.channelRepository = channelRepository;
     }
 
-    @GetMapping("/{channelID:[1-9][0-9]+}")
-    public Mono<ResponseEntity<ChannelResponse>> getChannel(@PathVariable String channelID) {
+    @GetMapping("/{channelId:[1-9][0-9]+}")
+    public Mono<ResponseEntity<ChannelResponse>> getChannel(@PathVariable String channelId) {
         // TODO - authorization
-        return channelRepository.findById(channelID).map(ChannelResponse::from).map(ResponseEntity::ok).switchIfEmpty(
+        return channelRepository.findById(channelId).map(ChannelResponse::from).map(ResponseEntity::ok).switchIfEmpty(
             Mono.just(ResponseEntity.notFound().build()));
     }
+
+    //    @PatchMapping("/{channelId:[1-9][0-9]+}")
+    //    public Mono<?> updateChannel(@PathVariable String channelId) {
+    //
+    //    }
+
+    //    @DeleteMapping("/{channelId:[1-9][0-9]+}")
+    //    public Mono<?> deleteChannel(@PathVariable String channelId) {
+    //
+    //    }
 }

@@ -90,7 +90,7 @@ public class GuildController {
         return guildRepository.existsById(guildId)
             .flatMap(exists -> exists ? Mono.just(body) : Mono.empty())
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
-            .map(rb -> new Channel(rb.getType(), guildId, rb.getName()))
+            .map(rb -> Channel.newGuildChannel(rb.getType(), guildId, rb.getName()))
             .flatMap(channelRepository::save)
             .map(ChannelResponse::from)
             .map(ResponseEntity::ok);
