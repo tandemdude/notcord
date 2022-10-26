@@ -1,5 +1,6 @@
 package io.github.tandemdude.notcord.models.db;
 
+import io.github.tandemdude.notcord.models.requests.MessageCreateRequestBody;
 import io.github.tandemdude.notcord.utils.SnowflakeGenerator;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -15,12 +16,18 @@ public class Message implements Persistable<String> {
     private String authorId;
     private String guildId;
     private String content;
+    private Integer nonce;
 
-    public Message(String channelId, String authorId, String guildId, String content) {
+    public Message(String channelId, String authorId, String guildId, String content, Integer nonce) {
         this.channelId = channelId;
         this.authorId = authorId;
         this.guildId = guildId;
         this.content = content;
+        this.nonce = nonce;
+    }
+
+    public Message(String channelId, String authorId, String guildId, MessageCreateRequestBody body) {
+        this(channelId, authorId, guildId, body.getContent(), body.getNonce());
     }
 
     @Override

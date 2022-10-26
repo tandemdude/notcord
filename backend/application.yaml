@@ -36,6 +36,8 @@ spring:
         smtp:
           auth: true
           starttls.enable: true
+  jackson:
+    default-property-inclusion: non_null
 
 email:
   address: ${EMAIL_ADDRESS}
@@ -46,3 +48,7 @@ jwt:
 endpoints:
   backend: ${BACKEND_BASE_URL:http://localhost:8080}
   frontend: ${FRONTEND_BASE_URL:http://localhost:3000}
+
+group-dms:
+  maxMembers: ${GROUP_DM_MAX_MEMBERS:10}
+  maxChannelsPerUser: ${GROUP_DM_MAX_CHANNELS_PER_USER:10}

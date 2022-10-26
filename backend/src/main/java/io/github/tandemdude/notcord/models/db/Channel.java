@@ -49,4 +49,12 @@ public class Channel implements Persistable<String> {
         this.id = isNew ? SnowflakeGenerator.newSnowflake() : this.id;
         return isNew;
     }
+
+    public boolean isDm() {
+        return this.type.equals(ChannelType.DM);
+    }
+
+    public boolean isGroupDm() {
+        return this.type.equals(ChannelType.GROUP_DM);
+    }
 }
