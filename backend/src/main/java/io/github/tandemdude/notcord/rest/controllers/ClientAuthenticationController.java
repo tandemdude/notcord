@@ -1,6 +1,7 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
 import io.github.tandemdude.notcord.config.EndpointConfig;
+import io.github.tandemdude.notcord.exceptions.HttpExceptionFactory;
 import io.github.tandemdude.notcord.models.db.User;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.UserCreateRequestBody;
@@ -78,7 +79,10 @@ public class ClientAuthenticationController {
         // TODO - validation (/^[\w\-.]{5,40}$/)
         return Mono.just(body)
             .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
-            .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
+            .filter(exists -> !exists)
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.conflictException(
+                "A user with that username already exists")))
+            .flatMap(unused -> newUser(body));
     }
 
     @PostMapping("/sign-in")

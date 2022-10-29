@@ -10,7 +10,7 @@ server:
   error:
     whitelabel:
       enabled: false
-    include-message: ALWAYS
+    include-message: always
 
 spring:
   main:
@@ -43,7 +43,7 @@ email:
   address: ${EMAIL_ADDRESS}
 
 jwt:
-  secret: NkK1y4YK8B4X9yiqCdBdm9FJjTyePhhsz6vfPq8npkvh2Zjx
+  secret: ${JWT_SECRET:NkK1y4YK8B4X9yiqCdBdm9FJjTyePhhsz6vfPq8npkvh2Zjx}
 
 endpoints:
   backend: ${BACKEND_BASE_URL:http://localhost:8080}

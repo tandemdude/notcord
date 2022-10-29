@@ -66,6 +66,24 @@ public class UserController {
     }
 
     @Transactional
+    @GetMapping("/{userId:[1-9][0-9]+}/messages/{messageId:[1-9][0-9]+}")
+    public Mono<MessageResponse> getMessageInDm(
+        @PathVariable String userId,
+        @PathVariable String messageId,
+        @RequestHeader("Authorization") String token
+    ) {
+        return oauth2AuthorizerService.extractTokenPair(token)
+            .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
+            .flatMap(pair -> channelService.resolveDmChannelBetween(userId, pair.getUserId()))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException(
+                "No DM channel exists with user '" + userId + "'")))
+            .flatMap(channel -> messageRepository.findByIdAndChannelId(messageId, channel.getId()))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A message with ID '" + messageId + "' does not exist")))
+            .map(MessageResponse::from);
+    }
+
+    @Transactional
     @PostMapping("/{userId:[1-9][0-9]+}/messages")
     public Mono<MessageResponse> createMessageInDm(
         @PathVariable String userId,
@@ -108,7 +126,7 @@ public class UserController {
     }
 
     @GetMapping("/-/group-dms")
-    public Flux<ChannelResponse> fetchGroupDmChannels(@RequestHeader("Authorization") String token) {
+    public Flux<GroupDmChannelResponse> fetchGroupDmChannels(@RequestHeader("Authorization") String token) {
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
@@ -119,7 +137,6 @@ public class UserController {
                 .map(members -> GroupDmChannelResponse.from(channel, members)));
     }
 
-    // TODO - make this return GroupDmChannelResponse
     @Transactional
     @PostMapping("/-/group-dms")
     public Mono<ResponseEntity<Object>> createGroupDmChannel(
@@ -174,8 +191,10 @@ public class UserController {
                 // channel and return a 200 response
                 return userResults
                     .map(ResultContainer::getResult).collectList()
-                    .flatMap(ids -> channelService.createNewGroupDmChannel(ownerId, body.getName(), ids))
-                    .map(ChannelResponse::from).map(ResponseEntity::ok);
+                    .flatMap(ids -> channelService
+                        .createNewGroupDmChannel(ownerId, body.getName(), ids)
+                        .map(channel -> GroupDmChannelResponse.from(channel, ids)))
+                    .map(ResponseEntity::ok);
             });
     }
 
