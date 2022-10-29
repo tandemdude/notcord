@@ -53,7 +53,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId:[1-9][0-9]+}")
-    public Mono<ResponseEntity<Object>> getUser(
+    public Mono<UserResponse> getUser(
         @PathVariable String userId,
         @RequestHeader("Authorization") String token
     ) {
@@ -62,8 +62,7 @@ public class UserController {
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .flatMap(unused -> userRepository.findById(userId))
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
-            .map(UserResponse::from)
-            .map(ResponseEntity::ok);
+            .map(UserResponse::from);
     }
 
     @Transactional
@@ -120,6 +119,7 @@ public class UserController {
                 .map(members -> GroupDmChannelResponse.from(channel, members)));
     }
 
+    // TODO - make this return GroupDmChannelResponse
     @Transactional
     @PostMapping("/-/group-dms")
     public Mono<ResponseEntity<Object>> createGroupDmChannel(

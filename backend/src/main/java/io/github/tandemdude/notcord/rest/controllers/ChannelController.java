@@ -12,6 +12,7 @@ import io.github.tandemdude.notcord.repositories.ChannelRepository;
 import io.github.tandemdude.notcord.repositories.DmChannelMemberRepository;
 import io.github.tandemdude.notcord.repositories.MessageRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -60,13 +61,28 @@ public class ChannelController {
                 .map(members -> GroupDmChannelResponse.from(channel, members)));
     }
 
+    @GetMapping("/{channelId:[1-9][0-9]+]}/messages/{messageId:[1-9][0-9]+}")
+    public Mono<MessageResponse> getMessage(
+        @PathVariable String channelId,
+        @PathVariable String messageId,
+        @RequestHeader("Authorization") String token
+    ) {
+        return oauth2AuthorizerService.extractTokenPair(token)
+            .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
+            // TODO - check channel exists and that user has permission to read messages in the channel
+            .flatMap(pair -> messageRepository.findByIdAndChannelId(messageId, channelId))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A message with ID '" + messageId + "' does not exist")))
+            .map(MessageResponse::from);
+    }
+
+    @Transactional
     @PostMapping("/{channelId:[1-9][0-9]+}/messages")
-    public Mono<MessageResponse> createMessageInChannel(
+    public Mono<MessageResponse> createMessage(
         @PathVariable String channelId,
         @RequestBody @Valid MessageCreateRequestBody body,
         @RequestHeader("Authorization") String token
     ) {
-
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))

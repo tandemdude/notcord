@@ -37,7 +37,7 @@ public class GuildController {
 
     @PostMapping
     @Transactional
-    public Mono<ResponseEntity<Object>> createGuild(
+    public Mono<GuildResponse> createGuild(
         @Valid @RequestBody GuildCreateRequestBody body, @RequestHeader("Authorization") String token
     ) {
         return oauth2AuthorizerService.extractTokenPair(token)
@@ -45,12 +45,11 @@ public class GuildController {
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .map(pair -> new Guild(pair.getUserId(), body.getName()))
             .flatMap(guildRepository::save)
-            .map(GuildResponse::from)
-            .map(ResponseEntity::ok);
+            .map(GuildResponse::from);
     }
 
     @GetMapping("/{guildId:[1-9][0-9]+}")
-    public Mono<ResponseEntity<Object>> getGuild(
+    public Mono<GuildResponse> getGuild(
         @PathVariable String guildId,
         @RequestHeader("Authorization") String token
     ) {
@@ -60,13 +59,12 @@ public class GuildController {
             .flatMap(pair -> guildRepository
                 .findById(guildId)  // TODO - Filter to check if owner of token has permission to read this specific guild
                 .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist"))))
-            .map(GuildResponse::from)
-            .map(ResponseEntity::ok);
+            .map(GuildResponse::from);
     }
 
     @DeleteMapping("/{guildId:[1-9][0-9]+}")
     @Transactional
-    public Mono<ResponseEntity<Object>> deleteGuild(
+    public Mono<ResponseEntity<Void>> deleteGuild(
         @PathVariable String guildId,
         @RequestHeader("Authorization") String token
     ) {
@@ -83,16 +81,15 @@ public class GuildController {
 
     @PostMapping("/{guildId:[1-9][0-9]+}/channels")
     @Transactional
-    public Mono<ResponseEntity<ChannelResponse>> createGuildChannel(
+    public Mono<ChannelResponse> createGuildChannel(
         @Valid @RequestBody GuildChannelCreateRequestBody body, @PathVariable String guildId
     ) {
         // TODO - authorization
         return guildRepository.existsById(guildId)
             .flatMap(exists -> exists ? Mono.just(body) : Mono.empty())
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist")))
-            .map(rb -> Channel.newGuildChannel(rb.getType(), guildId, rb.getName()))
+            .map(rb -> Channel.newGuildChannel(rb.getType(), rb.getName(), guildId))
             .flatMap(channelRepository::save)
-            .map(ChannelResponse::from)
-            .map(ResponseEntity::ok);
+            .map(ChannelResponse::from);
     }
 }

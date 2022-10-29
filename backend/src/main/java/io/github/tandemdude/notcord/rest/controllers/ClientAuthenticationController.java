@@ -25,6 +25,7 @@ import javax.validation.Valid;
 import java.util.Map;
 import java.util.Objects;
 
+// TODO - replace error response entities with Mono.error
 @Controller
 @RequestMapping("/client")
 public class ClientAuthenticationController {
