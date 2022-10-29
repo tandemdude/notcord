@@ -40,6 +40,7 @@ public class GuildController {
     public Mono<GuildResponse> createGuild(
         @Valid @RequestBody GuildCreateRequestBody body, @RequestHeader("Authorization") String token
     ) {
+        // TODO - add owner to the guild as a member
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))  // Do we want bots to be able to do this?
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
