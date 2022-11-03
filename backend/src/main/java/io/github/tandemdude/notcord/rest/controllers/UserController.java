@@ -58,7 +58,8 @@ public class UserController {
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT, Scope.IDENTITY_READ))
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .flatMap(pair -> userRepository.findById(pair.getUserId()))
-            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("You don't seem to exist")))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException(
+                "You don't seem to exist piss off")))
             .map(UserResponse::from);
     }
 
