@@ -3,11 +3,13 @@ package io.github.tandemdude.notcord.models.db;
 import io.github.tandemdude.notcord.models.db.enums.ChannelType;
 import io.github.tandemdude.notcord.utils.SnowflakeGenerator;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
+@NoArgsConstructor
 @Table(name = "channels", schema = "notcord")
 public class Channel implements Persistable<String> {
     @Id

@@ -14,6 +14,7 @@ import io.github.tandemdude.notcord.repositories.MessageRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -61,7 +62,7 @@ public class ChannelController {
                 .map(members -> GroupDmChannelResponse.from(channel, members)));
     }
 
-    @GetMapping("/{channelId:[1-9][0-9]+]}/messages/{messageId:[1-9][0-9]+}")
+    @GetMapping("/{channelId:[1-9][0-9]+}/messages/{messageId:[1-9][0-9]+}")
     public Mono<MessageResponse> getMessage(
         @PathVariable String channelId,
         @PathVariable String messageId,
@@ -92,5 +93,25 @@ public class ChannelController {
                 .map(channel -> new Message(channelId, pair.getUserId(), channel.getGuildId(), body)))
             .flatMap(messageRepository::save)
             .map(MessageResponse::from);
+    }
+
+    @Transactional
+    @DeleteMapping("/{channelId:[1-9][0-9]+}/messages/{messageId:[1-9][0-9]+}")
+    public Mono<ResponseEntity<Void>> deleteMessage(
+        @PathVariable String channelId,
+        @PathVariable String messageId,
+        @RequestHeader("Authorization") String token
+    ) {
+        return oauth2AuthorizerService.extractTokenPair(token)
+            .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
+            .flatMap(pair -> messageRepository
+                .findByIdAndChannelId(messageId, channelId)
+                .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A message with ID '" + messageId + "' does not exist in channel '" + channelId + "'")))
+                // TODO - if in guild, check user has permissions to delete others' messages
+                .filter(message -> message.getAuthorId().equals(pair.getUserId()))
+                .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException)))
+            .flatMap(messageRepository::delete)
+            .thenReturn(ResponseEntity.noContent().build());
     }
 }

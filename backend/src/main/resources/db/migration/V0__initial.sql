@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS notcord.messages
     channel_id VARCHAR(24) NOT NULL REFERENCES notcord.channels (id) ON DELETE CASCADE,
     author_id  VARCHAR(24) NOT NULL,
     guild_id   VARCHAR(24) DEFAULT NULL REFERENCES notcord.guilds (id) ON DELETE CASCADE,
-    content    TEXT        NOT NULL
+    content    TEXT        NOT NULL,
+    nonce      INTEGER     DEFAULT NULL
 );
 
 -- Oauth2

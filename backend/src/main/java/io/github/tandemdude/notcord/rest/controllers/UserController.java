@@ -52,6 +52,16 @@ public class UserController {
         this.dmChannelMemberRepository = dmChannelMemberRepository;
     }
 
+    @GetMapping("/-")
+    public Mono<UserResponse> getOwnUser(@RequestHeader("Authorization") String token) {
+        return oauth2AuthorizerService.extractTokenPair(token)
+            .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT, Scope.IDENTITY_READ))
+            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
+            .flatMap(pair -> userRepository.findById(pair.getUserId()))
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("You don't seem to exist")))
+            .map(UserResponse::from);
+    }
+
     @GetMapping("/{userId:[1-9][0-9]+}")
     public Mono<UserResponse> getUser(
         @PathVariable String userId,
@@ -63,24 +73,6 @@ public class UserController {
             .flatMap(unused -> userRepository.findById(userId))
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A user with ID '" + userId + "' does not exist")))
             .map(UserResponse::from);
-    }
-
-    @Transactional
-    @GetMapping("/{userId:[1-9][0-9]+}/messages/{messageId:[1-9][0-9]+}")
-    public Mono<MessageResponse> getMessageInDm(
-        @PathVariable String userId,
-        @PathVariable String messageId,
-        @RequestHeader("Authorization") String token
-    ) {
-        return oauth2AuthorizerService.extractTokenPair(token)
-            .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER, Scope.BOT))
-            .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
-            .flatMap(pair -> channelService.resolveDmChannelBetween(userId, pair.getUserId()))
-            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException(
-                "No DM channel exists with user '" + userId + "'")))
-            .flatMap(channel -> messageRepository.findByIdAndChannelId(messageId, channel.getId()))
-            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A message with ID '" + messageId + "' does not exist")))
-            .map(MessageResponse::from);
     }
 
     @Transactional
@@ -126,7 +118,7 @@ public class UserController {
     }
 
     @GetMapping("/-/group-dms")
-    public Flux<GroupDmChannelResponse> fetchGroupDmChannels(@RequestHeader("Authorization") String token) {
+    public Flux<GroupDmChannelResponse> getGroupDmChannels(@RequestHeader("Authorization") String token) {
         return oauth2AuthorizerService.extractTokenPair(token)
             .filter(pair -> Scope.grantsAny(pair.getScope(), Scope.USER))
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))

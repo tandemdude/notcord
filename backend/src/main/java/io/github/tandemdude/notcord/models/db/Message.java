@@ -3,11 +3,13 @@ package io.github.tandemdude.notcord.models.db;
 import io.github.tandemdude.notcord.models.requests.MessageCreateRequestBody;
 import io.github.tandemdude.notcord.utils.SnowflakeGenerator;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
+@NoArgsConstructor
 @Table(name = "messages", schema = "notcord")
 public class Message implements Persistable<String> {
     @Id
