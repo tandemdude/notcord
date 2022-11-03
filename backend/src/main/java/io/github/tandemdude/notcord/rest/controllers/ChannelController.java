@@ -12,11 +12,11 @@ import io.github.tandemdude.notcord.repositories.ChannelRepository;
 import io.github.tandemdude.notcord.repositories.DmChannelMemberRepository;
 import io.github.tandemdude.notcord.repositories.MessageRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/channels")
@@ -77,7 +77,7 @@ public class ChannelController {
     }
 
     @Transactional
-    @PostMapping("/{channelId:[1-9][0-9]+}/messages")
+    @PostMapping(value = "/{channelId:[1-9][0-9]+}/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<MessageResponse> createMessage(
         @PathVariable String channelId,
         @RequestBody @Valid MessageCreateRequestBody body,

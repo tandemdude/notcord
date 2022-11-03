@@ -13,6 +13,7 @@ import io.github.tandemdude.notcord.repositories.Oauth2TokenPairRepository;
 import io.github.tandemdude.notcord.repositories.UserRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.JwtUtil;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
-import javax.validation.Valid;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;

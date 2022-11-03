@@ -13,6 +13,8 @@ import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.EmailSender;
 import io.github.tandemdude.notcord.utils.JwtUtil;
 import io.github.tandemdude.notcord.utils.PasswordHasher;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
-import javax.validation.Valid;
 import java.util.Map;
 import java.util.Objects;
 
@@ -72,7 +73,7 @@ public class ClientAuthenticationController {
             .map(user -> ResponseEntity.ok().build());
     }
 
-    @PostMapping("/sign-up")
+    @PostMapping(value = "/sign-up", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Void>> handleSignUp(@Valid @RequestBody UserCreateRequestBody body) {
         // TODO - we might want to protect this using CORS
         // TODO - validation (/^[\w\-.]{5,40}$/)
@@ -84,7 +85,7 @@ public class ClientAuthenticationController {
             .flatMap(unused -> newUser(body));
     }
 
-    @PostMapping("/sign-in")
+    @PostMapping(value = "/sign-in", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Oauth2TokenResponse>> handleSignIn(@Valid @RequestBody UserSignInRequestBody body) {
         // TODO - we might want to protect this using CORS
         return userRepository.findByEmail(body.getEmail())

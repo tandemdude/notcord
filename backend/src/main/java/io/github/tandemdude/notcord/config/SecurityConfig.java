@@ -25,6 +25,8 @@ public class SecurityConfig implements WebFluxConfigurer {
             .disable()
             .csrf()
             .disable()
+            .logout()
+            .disable()
             .build();
     }
 

@@ -16,14 +16,14 @@ import io.github.tandemdude.notcord.repositories.MessageRepository;
 import io.github.tandemdude.notcord.repositories.UserRepository;
 import io.github.tandemdude.notcord.rest.services.ChannelService;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
+import jakarta.validation.Valid;
 import lombok.Data;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import javax.validation.Valid;
 
 
 @RestController
@@ -84,7 +84,7 @@ public class UserController {
     }
 
     @Transactional
-    @PostMapping("/{userId:[1-9][0-9]+}/messages")
+    @PostMapping(value = "/{userId:[1-9][0-9]+}/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<MessageResponse> createMessageInDm(
         @PathVariable String userId,
         @RequestBody @Valid MessageCreateRequestBody body,
@@ -138,7 +138,7 @@ public class UserController {
     }
 
     @Transactional
-    @PostMapping("/-/group-dms")
+    @PostMapping(value = "/-/group-dms", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Object>> createGroupDmChannel(
         @RequestBody @Valid GroupDmChannelCreateRequestBody body,
         @RequestHeader("Authorization") String token

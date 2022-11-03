@@ -1,9 +1,8 @@
 package io.github.tandemdude.notcord.models.requests;
 
 import io.github.tandemdude.notcord.models.db.enums.ChannelType;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import javax.validation.constraints.NotNull;
 
 @Data
 public class GuildChannelCreateRequestBody {

@@ -11,12 +11,12 @@ import io.github.tandemdude.notcord.models.responses.GuildResponse;
 import io.github.tandemdude.notcord.repositories.ChannelRepository;
 import io.github.tandemdude.notcord.repositories.GuildRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/guilds")
@@ -35,8 +35,8 @@ public class GuildController {
         this.oauth2AuthorizerService = oauth2AuthorizerService;
     }
 
-    @PostMapping
     @Transactional
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<GuildResponse> createGuild(
         @Valid @RequestBody GuildCreateRequestBody body, @RequestHeader("Authorization") String token
     ) {
@@ -80,8 +80,8 @@ public class GuildController {
             .flatMap(guild -> guildRepository.delete(guild).thenReturn(ResponseEntity.noContent().build()));
     }
 
-    @PostMapping("/{guildId:[1-9][0-9]+}/channels")
     @Transactional
+    @PostMapping(value = "/{guildId:[1-9][0-9]+}/channels", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ChannelResponse> createGuildChannel(
         @Valid @RequestBody GuildChannelCreateRequestBody body,
         @PathVariable String guildId,
