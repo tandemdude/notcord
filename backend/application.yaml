@@ -10,7 +10,7 @@ server:
   error:
     whitelabel:
       enabled: false
-    include-message: ALWAYS
+    include-message: always
 
 spring:
   main:
@@ -36,13 +36,21 @@ spring:
         smtp:
           auth: true
           starttls.enable: true
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: true
 
 email:
   address: ${EMAIL_ADDRESS}
 
 jwt:
-  secret: NkK1y4YK8B4X9yiqCdBdm9FJjTyePhhsz6vfPq8npkvh2Zjx
+  secret: ${JWT_SECRET:NkK1y4YK8B4X9yiqCdBdm9FJjTyePhhsz6vfPq8npkvh2Zjx}
 
 endpoints:
   backend: ${BACKEND_BASE_URL:http://localhost:8080}
   frontend: ${FRONTEND_BASE_URL:http://localhost:3000}
+
+group-dms:
+  maxMembers: ${GROUP_DM_MAX_MEMBERS:10}
+  maxChannelsPerUser: ${GROUP_DM_MAX_CHANNELS_PER_USER:10}

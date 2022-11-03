@@ -1,6 +1,7 @@
 package io.github.tandemdude.notcord.rest.controllers;
 
 import io.github.tandemdude.notcord.config.EndpointConfig;
+import io.github.tandemdude.notcord.exceptions.HttpExceptionFactory;
 import io.github.tandemdude.notcord.models.db.User;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.UserCreateRequestBody;
@@ -12,6 +13,8 @@ import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.EmailSender;
 import io.github.tandemdude.notcord.utils.JwtUtil;
 import io.github.tandemdude.notcord.utils.PasswordHasher;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
-import javax.validation.Valid;
 import java.util.Map;
 import java.util.Objects;
 
@@ -71,57 +73,58 @@ public class ClientAuthenticationController {
             .map(user -> ResponseEntity.ok().build());
     }
 
-    @PostMapping("/sign-up")
+    @PostMapping(value = "/sign-up", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Void>> handleSignUp(@Valid @RequestBody UserCreateRequestBody body) {
         // TODO - we might want to protect this using CORS
         // TODO - validation (/^[\w\-.]{5,40}$/)
         return Mono.just(body)
             .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
-            .flatMap(exists -> exists ? Mono.just(ResponseEntity.status(409).build()) : newUser(body));
+            .filter(exists -> !exists)
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.conflictException(
+                "A user with that username already exists")))
+            .flatMap(unused -> newUser(body));
     }
 
-    @PostMapping("/sign-in")
+    @PostMapping(value = "/sign-in", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Oauth2TokenResponse>> handleSignIn(@Valid @RequestBody UserSignInRequestBody body) {
         // TODO - we might want to protect this using CORS
         return userRepository.findByEmail(body.getEmail())
-            .flatMap(user -> passwordHasher.comparePasswords(
-                body.getPassword(),
-                user.getPassword()
-            ) ? Mono.just(user) : Mono.empty())
+            .filter(user -> passwordHasher.comparePasswords(body.getPassword(), user.getPassword()))
             .flatMap(oauth2AuthorizerService::generateUserTokenPairForFrontend)
-            .map(tokenPair -> ResponseEntity.ok(Oauth2TokenResponse.from(tokenPair)))
+            .map(Oauth2TokenResponse::from)
+            .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.status(401).build());
     }
 
     @PostMapping("/verify-email")
     @Transactional
-    public Mono<ResponseEntity<Object>> verifyUserEmail(@RequestParam String token) {
+    public Mono<ResponseEntity<Void>> verifyUserEmail(@RequestParam String token) {
         var parsed = jwtUtil.parseToken(token);
         if (parsed.isEmpty()) {
-            return Mono.just(ResponseEntity.status(401).build());
+            return Mono.error(HttpExceptionFactory::invalidTokenException);
         }
         return userRepository.findById((String) parsed.get().get("userId"))
             .flatMap(user -> user.getEmailVerified() ? Mono.empty() : Mono.just(user))
             .doOnNext(user -> user.setEmailVerified(true))
             .flatMap(userRepository::save)
-            .map(user -> ResponseEntity.status(202).build())
-            .defaultIfEmpty(ResponseEntity.status(409).build());
+            .map(user -> ResponseEntity.status(202).<Void>build())
+            .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.conflictException(null)));
     }
 
     @PostMapping("/refresh")
     public Mono<ResponseEntity<Oauth2TokenResponse>> refreshUserToken(@RequestParam String token) {
         var parsed = jwtUtil.parseToken(token);
         if (parsed.isEmpty()) {
-            return Mono.just(ResponseEntity.status(401).build());
+            return Mono.error(HttpExceptionFactory::invalidTokenException);
         }
         var data = parsed.get();
         if (!Objects.equals(data.get("type"), "refresh") || data.get("for") == null) {
-            return Mono.just(ResponseEntity.status(401).build());
+            return Mono.error(HttpExceptionFactory::invalidTokenException);
         }
 
         var accessTokenClaims = jwtUtil.parseTokenAllowExpired((String) data.get("for"));
         if (accessTokenClaims.isEmpty()) {
-            return Mono.just(ResponseEntity.status(401).build());
+            return Mono.error(HttpExceptionFactory::invalidTokenException);
         }
 
         return oauth2TokenPairRepository.findByRefreshToken(token)

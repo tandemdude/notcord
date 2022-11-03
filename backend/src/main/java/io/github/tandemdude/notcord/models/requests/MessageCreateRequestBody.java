@@ -4,9 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class UserSignInRequestBody {
-    @NotNull
-    private String email;
-    @NotNull
-    private String password;
+public class MessageCreateRequestBody {
+    private @NotNull String content;
+    private Integer nonce;
 }

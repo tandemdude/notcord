@@ -1,6 +1,7 @@
 package io.github.tandemdude.notcord.models.db;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
@@ -10,6 +11,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Data
+@NoArgsConstructor
 @Table(name = "oauth2_tokens", schema = "notcord")
 public class Oauth2TokenPair implements Persistable<String> {
     @Id

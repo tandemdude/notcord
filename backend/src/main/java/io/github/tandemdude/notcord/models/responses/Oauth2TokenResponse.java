@@ -1,13 +1,11 @@
 package io.github.tandemdude.notcord.models.responses;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.tandemdude.notcord.models.db.Oauth2TokenPair;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import lombok.Data;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Oauth2TokenResponse {
     @JsonProperty("token_type")
     private final String tokenType;

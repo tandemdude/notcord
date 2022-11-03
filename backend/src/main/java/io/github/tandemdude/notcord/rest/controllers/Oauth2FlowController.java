@@ -5,14 +5,15 @@ import io.github.tandemdude.notcord.exceptions.oauth.*;
 import io.github.tandemdude.notcord.models.db.Oauth2AuthorizationCode;
 import io.github.tandemdude.notcord.models.oauth2.Scope;
 import io.github.tandemdude.notcord.models.requests.Oauth2TokenRequestBody;
-import io.github.tandemdude.notcord.models.responses.DefaultErrorResponse;
 import io.github.tandemdude.notcord.models.responses.Oauth2TokenResponse;
+import io.github.tandemdude.notcord.models.responses.OauthErrorResponse;
 import io.github.tandemdude.notcord.repositories.Oauth2AuthorizationCodeRepository;
 import io.github.tandemdude.notcord.repositories.Oauth2CredentialsRepository;
 import io.github.tandemdude.notcord.repositories.Oauth2TokenPairRepository;
 import io.github.tandemdude.notcord.repositories.UserRepository;
 import io.github.tandemdude.notcord.rest.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.utils.JwtUtil;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
-import javax.validation.Valid;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,7 +68,7 @@ public class Oauth2FlowController {
         if (responseType.equals("authorization_code")) {
             if (!Arrays.stream(scope.split(" ")).allMatch(Scope.getScopeValueMap()::containsKey)) {
                 return Mono.just(ResponseEntity.badRequest()
-                    .body(new DefaultErrorResponse("invalid_scope", "One or more scopes were not recognised")));
+                    .body(new OauthErrorResponse("invalid_scope", "One or more scopes were not recognised")));
             }
 
             return oauth2CredentialsRepository.findById(clientId).filter(client -> client.getRedirectUri()
@@ -97,10 +97,10 @@ public class Oauth2FlowController {
                     endpointConfig.cleanFrontendUrl() + "/app/oauth?returnTo=" + endpointConfig.cleanBackendUrl() + "/oauth/prompt/" + token
                 )
                 .build()).defaultIfEmpty(ResponseEntity.badRequest()
-                .body(new DefaultErrorResponse("invalid_request", "The 'redirect_uri' parameter is invalid")));
+                .body(new OauthErrorResponse("invalid_request", "The 'redirect_uri' parameter is invalid")));
         }
         return Mono.just(ResponseEntity.status(400)
-            .body(new DefaultErrorResponse(
+            .body(new OauthErrorResponse(
                 "unsupported_response_type",
                 "Response type '" + responseType + "' is not permitted"
             )));
@@ -121,7 +121,7 @@ public class Oauth2FlowController {
             scope,
             state
         ) : Mono.just(ResponseEntity.status(400)
-            .body(new DefaultErrorResponse("invalid_request", "The 'client_id' parameter is invalid"))));
+            .body(new OauthErrorResponse("invalid_request", "The 'client_id' parameter is invalid"))));
     }
 
     @GetMapping("/prompt/{token}")
@@ -279,7 +279,7 @@ public class Oauth2FlowController {
         }
 
         return Mono.just(ResponseEntity.status(400)
-            .body(new DefaultErrorResponse(
+            .body(new OauthErrorResponse(
                 "unsupported_grant_type",
                 "Grant type '" + body.getGrant_type() + "' is not permitted"
             )));
@@ -292,17 +292,17 @@ public class Oauth2FlowController {
             .onErrorReturn(
                 AuthorizationCodeDoesNotExistException.class,
                 ResponseEntity.status(400)
-                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid"))
+                    .body(new OauthErrorResponse("invalid_grant", "The provided 'code' is invalid"))
             )
             .onErrorReturn(
                 AuthorizationCodeExpiredException.class,
                 ResponseEntity.status(400)
-                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'code' is invalid"))
+                    .body(new OauthErrorResponse("invalid_grant", "The provided 'code' is invalid"))
             )
             .onErrorReturn(
                 CredentialsDoNotMatchException.class,
                 ResponseEntity.status(401)
-                    .body(new DefaultErrorResponse(
+                    .body(new OauthErrorResponse(
                         "invalid_client",
                         "The provided 'client_id' and 'client_secret' combination is invalid"
                     ))
@@ -310,18 +310,18 @@ public class Oauth2FlowController {
             .onErrorReturn(
                 RedirectUriIncorrectException.class,
                 ResponseEntity.status(400)
-                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid"))
+                    .body(new OauthErrorResponse("invalid_grant", "The provided 'redirect_uri' is invalid"))
             )
             // Handle errors that could have been caused during refresh token grant
             .onErrorReturn(
                 RefreshTokenDoesNotExistException.class,
                 ResponseEntity.status(400)
-                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid"))
+                    .body(new OauthErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid"))
             )
             .onErrorReturn(
                 RefreshTokenExpiredException.class,
                 ResponseEntity.status(400)
-                    .body(new DefaultErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid"))
+                    .body(new OauthErrorResponse("invalid_grant", "The provided 'refresh_token' is invalid"))
             )
             // If for some reason some other error was thrown, or we still have an empty mono
             .defaultIfEmpty(ResponseEntity.internalServerError().build());

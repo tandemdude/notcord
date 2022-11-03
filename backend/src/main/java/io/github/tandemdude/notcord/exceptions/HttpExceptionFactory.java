@@ -25,4 +25,12 @@ public class HttpExceptionFactory {
     public static ResponseStatusException resourceNotFoundException(String details) {
         return new ResponseStatusException(HttpStatus.NOT_FOUND, details);
     }
+
+    public static ResponseStatusException badRequestException(String details) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, details);
+    }
+
+    public static ResponseStatusException conflictException(String details) {
+        return new ResponseStatusException(HttpStatus.CONFLICT, details);
+    }
 }
