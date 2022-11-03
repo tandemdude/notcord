@@ -26,7 +26,7 @@ Errors to verify are handled correctly:
 [ ] pass an invalid cookie and see what happens
 [x] use the wrong type in the body for a valid field
 [x] miss out a required field
-[ ] add an unrecognised field  // TODO - jackson doesn't seem to care about this?
+[x] add an unrecognised field
 [x] omit the body where it is expected
 [x] use an unknown encoding in content type
 [x] use an unknown encoding in accept
@@ -82,7 +82,8 @@ public class GlobalErrorAttributes extends DefaultErrorAttributes {
 
         var problemDetail = ProblemDetail.forStatus(ex.getStatusCode());
         // Set the detail to specify the parameter type if we could extract it from the parameter
-        problemDetail.setDetail(parameterType.isEmpty() ? "Validation failure" : parameterType.get() + " validation failure");
+        problemDetail.setDetail(parameterType.isEmpty() ? ex.getBody()
+            .getDetail() : parameterType.get() + " validation failure");
 
         // We use a TreeMap here to ensure that ordering of errors in the ProblemDetails object is consistent
         var errorMap = new TreeMap<String, Set<String>>(String::compareToIgnoreCase);
@@ -114,11 +115,14 @@ public class GlobalErrorAttributes extends DefaultErrorAttributes {
     }
 
     public ProblemDetail onUnsupportedMediaTypeException(UnsupportedMediaTypeStatusException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(415), Objects.requireNonNull(ex.getReason()));
+        return ProblemDetail.forStatusAndDetail(
+            HttpStatusCode.valueOf(415),
+            ex.getReason() == null ? "Unsupported media type" : ex.getReason()
+        );
     }
 
     public ProblemDetail onException(Throwable ex) {
-        // TODO - add exception publishing ?somewhere? and return a reference to identify it
+        // TODO - add exception publishing ?somewhere? and return a reference to identify it?
         LOGGER.error("An exception occurred but was not handled (500 status returned)", ex);
         return defaultProblemDetail;
     }
