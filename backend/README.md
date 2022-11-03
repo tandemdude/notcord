@@ -2,7 +2,7 @@
 
 ### Pre-requisites
 
-- Java 17+
+- Java 19+
 - Maven
 
 ### Environment
