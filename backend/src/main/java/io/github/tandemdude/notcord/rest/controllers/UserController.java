@@ -59,7 +59,7 @@ public class UserController {
             .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException))
             .flatMap(pair -> userRepository.findById(pair.getUserId()))
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException(
-                "You don't seem to exist piss off")))
+                "You don't exist. Piss off!")))
             .map(UserResponse::from);
     }
 
