@@ -1,0 +1,37 @@
+debug: false
+
+logging:
+  level:
+    root: INFO
+
+server:
+  port: 8080
+  http2:
+    enabled: true
+  error:
+    whitelabel:
+      enabled: false
+    include-message: always
+
+spring:
+  main:
+    web-application-type: reactive
+  r2dbc:
+    url: r2dbc:h2:file://${DB_PATH:./../testdb}
+    repositories:
+      enabled: true
+    username: sa
+    password:
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: true
+
+endpoints:
+  frontend: ${FRONTEND_BASE_URL:http://localhost:3000}
+  rest: ${REST_API_BASE_URL:http://localhost:8080}
+  authorizer: ${AUTHORIZER_BASE_URL:http://localhost:8081}
+
+group-dms:
+  maxMembers: ${GROUP_DM_MAX_MEMBERS:10}
+  maxChannelsPerUser: ${GROUP_DM_MAX_CHANNELS_PER_USER:10}
