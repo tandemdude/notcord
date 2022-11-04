@@ -13,7 +13,7 @@ export default function VerifyEmail() {
     const [status, setStatus] = useState(null);
 
     useEffect(() => {
-        axios.post("http://localhost:8080/client/verify-email?token=" + token)
+        axios.post("http://localhost:8081/client/verify-email?token=" + token)
              .then(response => setStatus(response.status))
              .catch(error => {
                  if (error.response && (error.response.status == 401 || error.response.status == 409)) {

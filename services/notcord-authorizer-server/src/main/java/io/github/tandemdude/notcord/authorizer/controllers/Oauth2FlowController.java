@@ -14,7 +14,7 @@ import io.github.tandemdude.notcord.authorizer.repositories.Oauth2TokenPairRepos
 import io.github.tandemdude.notcord.authorizer.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
-import io.github.tandemdude.notcord.commons.repositories.UserRepository;
+import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

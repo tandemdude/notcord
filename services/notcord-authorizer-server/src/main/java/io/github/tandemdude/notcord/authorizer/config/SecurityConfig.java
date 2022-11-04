@@ -15,7 +15,6 @@ import org.springframework.web.reactive.config.WebFluxConfigurer;
 public class SecurityConfig implements WebFluxConfigurer {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        System.out.println("called");
         return http.authorizeExchange()
             .pathMatchers("/**")
             .permitAll()

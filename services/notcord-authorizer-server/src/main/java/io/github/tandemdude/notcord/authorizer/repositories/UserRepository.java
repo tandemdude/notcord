@@ -1,4 +1,4 @@
-package io.github.tandemdude.notcord.commons.repositories;
+package io.github.tandemdude.notcord.authorizer.repositories;
 
 import io.github.tandemdude.notcord.commons.entities.User;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;

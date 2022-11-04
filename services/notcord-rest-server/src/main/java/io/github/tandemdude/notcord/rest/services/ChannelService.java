@@ -1,6 +1,5 @@
 package io.github.tandemdude.notcord.rest.services;
 
-import io.github.tandemdude.notcord.commons.repositories.UserRepository;
 import io.github.tandemdude.notcord.rest.config.GroupDmConfig;
 import io.github.tandemdude.notcord.rest.models.db.Channel;
 import io.github.tandemdude.notcord.rest.models.db.DmChannelMember;
@@ -8,6 +7,7 @@ import io.github.tandemdude.notcord.rest.models.db.enums.ChannelType;
 import io.github.tandemdude.notcord.rest.models.utility.ResultContainer;
 import io.github.tandemdude.notcord.rest.repositories.ChannelRepository;
 import io.github.tandemdude.notcord.rest.repositories.DmChannelMemberRepository;
+import io.github.tandemdude.notcord.rest.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
