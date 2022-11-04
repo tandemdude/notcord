@@ -6,8 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
-//@ComponentScan("io.github.tandemdude.notcord.commons")
-//@ComponentScan("io.github.tandemdude.notcord.authorizer")
 public class NotcordAuthorizerBackendApp {
     public static void main(String[] args) {
         SpringApplication.run(NotcordAuthorizerBackendApp.class);
