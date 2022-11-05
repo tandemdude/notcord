@@ -10,7 +10,6 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.UUID;
@@ -18,11 +17,6 @@ import java.util.UUID;
 @Service
 public class TokenGenerationService {
     private static final Base64.Encoder encoder = Base64.getEncoder().withoutPadding();
-    private static final SecureRandom random = new SecureRandom();
-
-    private static final int lowerLimit = 97;  // "a"
-    private static final int upperLimit = 122;  // "z"
-    private static final int tokenRandomPartLength = 10;
 
     private static final long accessTokenDefaultExpires = 60 * 60 * 24 * 30 * 2;  // 2 Months
     private static final long refreshTokenDefaultExpires = 60 * 60 * 24 * 30 * 6;  // 6 Months
