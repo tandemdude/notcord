@@ -8,12 +8,15 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.UUID;
 
 @Service
-public class Oauth2AuthorizerService {
+public class TokenGenerationService {
     private static final Base64.Encoder encoder = Base64.getEncoder().withoutPadding();
     private static final SecureRandom random = new SecureRandom();
 
@@ -26,19 +29,28 @@ public class Oauth2AuthorizerService {
 
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
 
-    public Oauth2AuthorizerService(Oauth2TokenPairRepository oauth2TokenPairRepository) {
+    public TokenGenerationService(Oauth2TokenPairRepository oauth2TokenPairRepository) {
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
     }
 
     public String generateToken(User linkedTo) {
         var userIdPart = encoder.encode(linkedTo.getId().getBytes(StandardCharsets.UTF_8));
-        var uniquePart = encoder.encode((Thread.currentThread().getName() + System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8));
-        var randomPart = encoder.encode(random.ints(lowerLimit, upperLimit + 1)
-            .limit(tokenRandomPartLength)
-            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-            .toString()
-            .getBytes(StandardCharsets.UTF_8));
-        return new String(userIdPart) + "." + new String(uniquePart) + "." + new String(randomPart);
+        var uniquePart = encoder.encode((Thread.currentThread().getName() + System.currentTimeMillis()).getBytes(
+            StandardCharsets.UTF_8));
+        var randomPart = UUID.randomUUID().toString().replace("-", "").getBytes(StandardCharsets.UTF_8);
+
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        digest.update(uniquePart);
+        digest.update(".".getBytes(StandardCharsets.UTF_8));
+        digest.update(randomPart);
+        var hashOutput = encoder.encode(digest.digest());
+
+        return new String(userIdPart) + "." + new String(hashOutput);
     }
 
     public Mono<Oauth2TokenPair> generateUserTokenPairForFrontend(User user) {

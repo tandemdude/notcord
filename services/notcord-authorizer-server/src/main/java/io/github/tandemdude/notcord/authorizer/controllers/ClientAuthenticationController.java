@@ -9,7 +9,7 @@ import io.github.tandemdude.notcord.authorizer.models.requests.UserSignInRequest
 import io.github.tandemdude.notcord.authorizer.models.responses.Oauth2TokenResponse;
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2TokenPairRepository;
 import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
-import io.github.tandemdude.notcord.authorizer.services.Oauth2AuthorizerService;
+import io.github.tandemdude.notcord.authorizer.services.TokenGenerationService;
 import io.github.tandemdude.notcord.commons.entities.User;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
@@ -29,7 +29,7 @@ public class ClientAuthenticationController {
     private final PasswordHasher passwordHasher;
     private final EmailSender emailSender;
     private final JwtUtil jwtUtil;
-    private final Oauth2AuthorizerService oauth2AuthorizerService;
+    private final TokenGenerationService tokenGenerationService;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
     private final EndpointProperties endpointProperties;
 
@@ -38,7 +38,7 @@ public class ClientAuthenticationController {
         PasswordHasher passwordHasher,
         EmailSender emailSender,
         JwtUtil jwtUtil,
-        Oauth2AuthorizerService oauth2AuthorizerService,
+        TokenGenerationService tokenGenerationService,
         Oauth2TokenPairRepository oauth2TokenPairRepository,
         EndpointProperties endpointProperties
     ) {
@@ -46,7 +46,7 @@ public class ClientAuthenticationController {
         this.passwordHasher = passwordHasher;
         this.emailSender = emailSender;
         this.jwtUtil = jwtUtil;
-        this.oauth2AuthorizerService = oauth2AuthorizerService;
+        this.tokenGenerationService = tokenGenerationService;
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
         this.endpointProperties = endpointProperties;
     }
@@ -85,7 +85,7 @@ public class ClientAuthenticationController {
         // TODO - we might want to protect this using CORS
         return userRepository.findByEmail(body.getEmail())
             .filter(user -> passwordHasher.comparePasswords(body.getPassword(), user.getPassword()))
-            .flatMap(oauth2AuthorizerService::generateUserTokenPairForFrontend)
+            .flatMap(tokenGenerationService::generateUserTokenPairForFrontend)
             .map(Oauth2TokenResponse::from)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.status(401).build());
@@ -112,7 +112,7 @@ public class ClientAuthenticationController {
             .flatMap(pair -> pair.getScope() == Scope.USER ? Mono.just(pair) : Mono.empty())
             .flatMap(pair -> oauth2TokenPairRepository.delete(pair).thenReturn(pair.getUserId()))
             .flatMap(userRepository::findById)
-            .flatMap(oauth2AuthorizerService::generateUserTokenPairForFrontend)
+            .flatMap(tokenGenerationService::generateUserTokenPairForFrontend)
             .map(Oauth2TokenResponse::from)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.status(401).build());

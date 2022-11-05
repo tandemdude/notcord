@@ -12,7 +12,7 @@ import io.github.tandemdude.notcord.authorizer.repositories.Oauth2AuthorizationC
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2CredentialsRepository;
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2TokenPairRepository;
 import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
-import io.github.tandemdude.notcord.authorizer.services.Oauth2AuthorizerService;
+import io.github.tandemdude.notcord.authorizer.services.TokenGenerationService;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
 import jakarta.validation.Valid;
@@ -36,7 +36,7 @@ import java.util.Objects;
 public class Oauth2FlowController {
     private final Oauth2AuthorizationCodeRepository oauth2AuthorizationCodeRepository;
     private final Oauth2CredentialsRepository oauth2CredentialsRepository;
-    private final Oauth2AuthorizerService oauth2AuthorizerService;
+    private final TokenGenerationService tokenGenerationService;
     private final UserRepository userRepository;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
     private final EndpointProperties endpointProperties;
@@ -45,7 +45,7 @@ public class Oauth2FlowController {
     public Oauth2FlowController(
         Oauth2AuthorizationCodeRepository oauth2AuthorizationCodeRepository,
         Oauth2CredentialsRepository oauth2CredentialsRepository,
-        Oauth2AuthorizerService oauth2AuthorizerService,
+        TokenGenerationService tokenGenerationService,
         UserRepository userRepository,
         Oauth2TokenPairRepository oauth2TokenPairRepository,
         EndpointProperties endpointProperties,
@@ -53,7 +53,7 @@ public class Oauth2FlowController {
     ) {
         this.oauth2AuthorizationCodeRepository = oauth2AuthorizationCodeRepository;
         this.oauth2CredentialsRepository = oauth2CredentialsRepository;
-        this.oauth2AuthorizerService = oauth2AuthorizerService;
+        this.tokenGenerationService = tokenGenerationService;
         this.userRepository = userRepository;
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
         this.endpointProperties = endpointProperties;
@@ -242,7 +242,7 @@ public class Oauth2FlowController {
                     .switchIfEmpty(Mono.error(RedirectUriIncorrectException::new)))
                 .flatMap(code -> userRepository.findById(code.getUserId())
                     // Issue new access token and refresh token pair
-                    .flatMap(user -> oauth2AuthorizerService.generateTokenPair(
+                    .flatMap(user -> tokenGenerationService.generateTokenPair(
                         user,
                         code.getScope(),
                         43200,
@@ -269,7 +269,7 @@ public class Oauth2FlowController {
                     .map(creds -> pair))
                 .flatMap(pair -> userRepository.findById(pair.getUserId())
                     // Issue new access token and refresh token pair
-                    .flatMap(user -> oauth2AuthorizerService.generateTokenPair(
+                    .flatMap(user -> tokenGenerationService.generateTokenPair(
                         user,
                         pair.getScope(),
                         43200,

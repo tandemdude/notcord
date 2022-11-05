@@ -309,10 +309,12 @@ notcord_run_rest_command() {
   pushd services || exit 1
   pushd notcord-rest-server || exit 1
 
-  if [ -n "${NC_WORKER_ID}" ]; then
+  if [[ ! "${NC_WORKER_ID}" =~ ^[0-9]+$ ]]; then
+    echo "NC_WORKER_ID not set or invalid. Defaulting to 0"
     export NC_WORKER_ID=0
   fi
-  if [ -n "${NC_PROCESS_ID}" ]; then
+  if [[ ! "${NC_PROCESS_ID}" =~ ^[0-9]+$ ]]; then
+    echo "NC_PROCESS_ID not set or invalid. Defaulting to 0"
     export NC_PROCESS_ID=0
   fi
 
@@ -332,10 +334,12 @@ notcord_run_authorizer_command() {
   pushd services || exit 1
   pushd notcord-authorizer-server || exit 1
 
-  if [ -n "${NC_WORKER_ID}" ]; then
+  if [[ ! "${NC_WORKER_ID}" =~ ^[0-9]+$ ]]; then
+    echo "NC_WORKER_ID not set or invalid. Defaulting to 0"
     export NC_WORKER_ID=0
   fi
-  if [ -n "${NC_PROCESS_ID}" ]; then
+  if [[ ! "${NC_PROCESS_ID}" =~ ^[0-9]+$ ]]; then
+    echo "NC_PROCESS_ID not set or invalid. Defaulting to 0"
     export NC_PROCESS_ID=0
   fi
 
