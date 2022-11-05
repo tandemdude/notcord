@@ -45,7 +45,7 @@ export default function SignUpForm({setShowSignUp}) {
         },
         onSubmit: values => {
             setLoading(true);
-            axios.post("http://localhost:8080/client/sign-up", values)
+            axios.post("http://localhost:8081/client/sign-up", values)
                  .then(response => {
                      if (response.status == 200) {
                          setShowSignUp({

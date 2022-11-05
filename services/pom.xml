@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.0.0-RC1</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>io.github.tandemdude.notcord</groupId>
+    <artifactId>notcord-parent</artifactId>
+    <version>0.0.1</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>notcord-authorizer-server</module>
+        <module>notcord-commons</module>
+        <module>notcord-rest-server</module>
+        <!--        <module>gateway</module>-->
+    </modules>
+
+    <inceptionYear>2022</inceptionYear>
+
+    <contributors>
+        <contributor>
+            <name>tandemdude</name>
+            <url>${project-organization-url}</url>
+        </contributor>
+        <contributor>
+            <name>davfsa</name>
+            <url>https://github.com/davfsa</url>
+        </contributor>
+    </contributors>
+
+    <scm>
+        <url>scm:git:${project-scm-url}</url>
+        <connection>scm:git:${project-scm-url}</connection>
+        <developerConnection>scm:git:${project-scm-url}</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <!-- Dependencies -->
+        <reactor-test.version>3.4.22</reactor-test.version>
+        <flyway-core.version>9.6.0</flyway-core.version>
+        <lombok.version>1.18.24</lombok.version>
+
+        <!-- Plugins -->
+        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <project-organization-url>https://github.com/tandemdude</project-organization-url>
+        <project-scm-url>https://github.com/tandemdude/notcord.git</project-scm-url>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>spring-milestone</id>
+            <name>spring-milestone</name>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-milestone</id>
+            <name>spring-milestone</name>
+            <url>https://repo.spring.io/milestone</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-test</artifactId>
+                <scope>test</scope>
+                <version>${reactor-test.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <scope>provided</scope>
+                <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway-core.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
