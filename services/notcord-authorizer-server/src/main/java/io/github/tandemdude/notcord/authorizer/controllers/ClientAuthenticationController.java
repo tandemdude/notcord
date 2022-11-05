@@ -71,7 +71,6 @@ public class ClientAuthenticationController {
     @PostMapping(value = "/sign-up", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Void>> handleSignUp(@Valid @RequestBody UserCreateRequestBody body) {
         // TODO - we might want to protect this using CORS
-        // TODO - validation (/^[\w\-.]{5,40}$/)
         return Mono.just(body)
             .flatMap(rb -> userRepository.existsByUsername(rb.getUsername()))
             .filter(exists -> !exists)

@@ -1,9 +1,10 @@
 package io.github.tandemdude.notcord.rest.models.requests;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 @Data
 public class GuildCreateRequestBody {
-    private @NotNull String name;
+    @NotEmpty
+    private String name;
 }
