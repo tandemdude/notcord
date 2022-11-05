@@ -3,30 +3,26 @@ package io.github.tandemdude.notcord.authorizer.controllers;
 import io.github.tandemdude.notcord.authorizer.components.EmailSender;
 import io.github.tandemdude.notcord.authorizer.components.JwtUtil;
 import io.github.tandemdude.notcord.authorizer.components.PasswordHasher;
-import io.github.tandemdude.notcord.authorizer.config.EndpointConfig;
+import io.github.tandemdude.notcord.authorizer.config.EndpointProperties;
 import io.github.tandemdude.notcord.authorizer.models.requests.UserCreateRequestBody;
 import io.github.tandemdude.notcord.authorizer.models.requests.UserSignInRequestBody;
 import io.github.tandemdude.notcord.authorizer.models.responses.Oauth2TokenResponse;
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2TokenPairRepository;
+import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
 import io.github.tandemdude.notcord.authorizer.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.commons.entities.User;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
-import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
-@Controller
+@RestController
 @RequestMapping("/client")
 public class ClientAuthenticationController {
     private final UserRepository userRepository;
@@ -35,7 +31,7 @@ public class ClientAuthenticationController {
     private final JwtUtil jwtUtil;
     private final Oauth2AuthorizerService oauth2AuthorizerService;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
-    private final EndpointConfig endpointConfig;
+    private final EndpointProperties endpointProperties;
 
     public ClientAuthenticationController(
         UserRepository userRepository,
@@ -44,7 +40,7 @@ public class ClientAuthenticationController {
         JwtUtil jwtUtil,
         Oauth2AuthorizerService oauth2AuthorizerService,
         Oauth2TokenPairRepository oauth2TokenPairRepository,
-        EndpointConfig endpointConfig
+        EndpointProperties endpointProperties
     ) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
@@ -52,7 +48,7 @@ public class ClientAuthenticationController {
         this.jwtUtil = jwtUtil;
         this.oauth2AuthorizerService = oauth2AuthorizerService;
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
-        this.endpointConfig = endpointConfig;
+        this.endpointProperties = endpointProperties;
     }
 
     public Mono<ResponseEntity<Void>> newUser(UserCreateRequestBody body) {
@@ -63,7 +59,7 @@ public class ClientAuthenticationController {
                 String content = "Hi " + body.getUsername() + "!\n\n"
                     + "Thanks for using NotCord - the crappy discord alternative.\n"
                     + "Next step is to verify your email address. Click the below link or paste it into a browser:\n\n"
-                    + endpointConfig.cleanFrontendUrl() + "/app/verify-email?token=" + token + "\n\n"
+                    + endpointProperties.cleanFrontendUrl() + "/app/verify-email?token=" + token + "\n\n"
                     + "The link will expire in 2 hours.\n\n"
                     + "Cheers,\n"
                     + "thomm.o";

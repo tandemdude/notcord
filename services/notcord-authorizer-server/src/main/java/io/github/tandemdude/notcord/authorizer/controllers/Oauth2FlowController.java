@@ -1,7 +1,7 @@
 package io.github.tandemdude.notcord.authorizer.controllers;
 
 import io.github.tandemdude.notcord.authorizer.components.JwtUtil;
-import io.github.tandemdude.notcord.authorizer.config.EndpointConfig;
+import io.github.tandemdude.notcord.authorizer.config.EndpointProperties;
 import io.github.tandemdude.notcord.authorizer.exceptions.*;
 import io.github.tandemdude.notcord.authorizer.models.db.Oauth2AuthorizationCode;
 import io.github.tandemdude.notcord.authorizer.models.requests.Oauth2TokenRequestBody;
@@ -11,10 +11,10 @@ import io.github.tandemdude.notcord.authorizer.models.responses.OauthErrorRespon
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2AuthorizationCodeRepository;
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2CredentialsRepository;
 import io.github.tandemdude.notcord.authorizer.repositories.Oauth2TokenPairRepository;
+import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
 import io.github.tandemdude.notcord.authorizer.services.Oauth2AuthorizerService;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
-import io.github.tandemdude.notcord.authorizer.repositories.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +39,7 @@ public class Oauth2FlowController {
     private final Oauth2AuthorizerService oauth2AuthorizerService;
     private final UserRepository userRepository;
     private final Oauth2TokenPairRepository oauth2TokenPairRepository;
-    private final EndpointConfig endpointConfig;
+    private final EndpointProperties endpointProperties;
     private final JwtUtil jwtUtil;
 
     public Oauth2FlowController(
@@ -48,7 +48,7 @@ public class Oauth2FlowController {
         Oauth2AuthorizerService oauth2AuthorizerService,
         UserRepository userRepository,
         Oauth2TokenPairRepository oauth2TokenPairRepository,
-        EndpointConfig endpointConfig,
+        EndpointProperties endpointProperties,
         JwtUtil jwtUtil
     ) {
         this.oauth2AuthorizationCodeRepository = oauth2AuthorizationCodeRepository;
@@ -56,7 +56,7 @@ public class Oauth2FlowController {
         this.oauth2AuthorizerService = oauth2AuthorizerService;
         this.userRepository = userRepository;
         this.oauth2TokenPairRepository = oauth2TokenPairRepository;
-        this.endpointConfig = endpointConfig;
+        this.endpointProperties = endpointProperties;
         this.jwtUtil = jwtUtil;
     }
 
@@ -96,7 +96,7 @@ public class Oauth2FlowController {
             }).map(token -> ResponseEntity.status(302)
                 .header(
                     "Location",
-                    endpointConfig.cleanFrontendUrl() + "/app/oauth?returnTo=" + endpointConfig.cleanAuthorizerUrl() + "/oauth/prompt/" + token
+                    endpointProperties.cleanFrontendUrl() + "/app/oauth?returnTo=" + endpointProperties.cleanAuthorizerUrl() + "/oauth/prompt/" + token
                 )
                 .build()).defaultIfEmpty(ResponseEntity.badRequest()
                 .body(new OauthErrorResponse("invalid_request", "The 'redirect_uri' parameter is invalid")));
@@ -130,7 +130,7 @@ public class Oauth2FlowController {
     public Mono<String> displayConsentScreen(@PathVariable String token, @RequestParam String userToken, Model model) {
         var maybeClaims = jwtUtil.parseToken(token);
         if (maybeClaims.isEmpty()) {
-            return Mono.just("redirect:" + endpointConfig.frontend404Page());
+            return Mono.just("redirect:" + endpointProperties.frontend404Page());
         }
 
         var allowToken = jwtUtil.generateToken(Map.of("inner", token, "consent", "allow"), 60 * 15);
@@ -141,7 +141,7 @@ public class Oauth2FlowController {
         model.addAttribute("allowToken", allowToken);
         model.addAttribute("denyToken", denyToken);
         model.addAttribute("redirectUri", claims.get("redirectUri"));
-        model.addAttribute("frontendBaseUrl", endpointConfig.cleanFrontendUrl());
+        model.addAttribute("frontendBaseUrl", endpointProperties.cleanFrontendUrl());
 
         var requestedScopes = forceLong(claims.get("scope"));
         model.addAttribute("scopes", Scope.getScopeDescriptionMap().entrySet().stream()
@@ -160,7 +160,7 @@ public class Oauth2FlowController {
             .doOnNext(creds -> model.addAttribute("appIcon", creds.getDefaultIconSvg()))
             .doOnNext(creds -> model.addAttribute("appName", creds.getAppName()))
             .map(unused -> "authorize")
-            .defaultIfEmpty("redirect:" + endpointConfig.frontend404Page());  // User token or prompt token is unrecognised
+            .defaultIfEmpty("redirect:" + endpointProperties.frontend404Page());  // User token or prompt token is unrecognised
     }
 
     @GetMapping("/complete")
@@ -168,20 +168,20 @@ public class Oauth2FlowController {
         var decodedMeta = jwtUtil.parseToken(token);
         if (decodedMeta.isEmpty()) {
             // Invalid token has been supplied
-            return Mono.just("redirect:" + endpointConfig.frontend404Page());
+            return Mono.just("redirect:" + endpointProperties.frontend404Page());
         }
 
         var inner = jwtUtil.parseToken((String) decodedMeta.get().get("inner"));
         if (inner.isEmpty()) {
             // The token supplied was valid but not of the correct type
-            return Mono.just("redirect:" + endpointConfig.frontend404Page());
+            return Mono.just("redirect:" + endpointProperties.frontend404Page());
         }
 
         var innerClaims = inner.get();
         if (!innerClaims.containsKey("redirectUri") || !innerClaims.containsKey("clientId") || !innerClaims.containsKey(
             "scope")) {
             // Inner token does not contain the required data
-            return Mono.just("redirect:" + endpointConfig.frontend404Page());
+            return Mono.just("redirect:" + endpointProperties.frontend404Page());
         }
 
         var redirectUriBuilder = UriComponentsBuilder.fromUriString((String) innerClaims.get("redirectUri"));

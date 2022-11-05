@@ -1,6 +1,6 @@
 package io.github.tandemdude.notcord.authorizer.components;
 
-import io.github.tandemdude.notcord.authorizer.config.JwtConfig;
+import io.github.tandemdude.notcord.authorizer.config.JwtProperties;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +16,10 @@ import java.util.Optional;
 public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-    private final JwtConfig jwtConfig;
+    private final JwtProperties jwtProperties;
 
-    public JwtUtil(JwtConfig jwtConfig) {
-        this.jwtConfig = jwtConfig;
+    public JwtUtil(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
     }
 
     public String generateToken(Map<String, Object> claims, long expiresInSeconds) {
@@ -27,13 +27,13 @@ public class JwtUtil {
         return Jwts.builder()
             .setClaims(newClaims)
             .setExpiration(new Date(Instant.now().toEpochMilli() + (expiresInSeconds * 1000)))
-            .signWith(SignatureAlgorithm.HS256, jwtConfig.getSecret())
+            .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecret())
             .compact();
     }
 
     public Optional<Map<String, Object>> parseToken(String token) {
         try {
-            return Optional.of(Jwts.parser().setSigningKey(jwtConfig.getSecret()).parseClaimsJws(token).getBody());
+            return Optional.of(Jwts.parser().setSigningKey(jwtProperties.getSecret()).parseClaimsJws(token).getBody());
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | ExpiredJwtException ex) {
             logger.debug("Error occurred while decoding JWT token", ex);
         }
@@ -42,7 +42,7 @@ public class JwtUtil {
 
     public Optional<Map<String, Object>> parseTokenAllowExpired(String token) {
         try {
-            return Optional.of(Jwts.parser().setSigningKey(jwtConfig.getSecret()).parseClaimsJws(token).getBody());
+            return Optional.of(Jwts.parser().setSigningKey(jwtProperties.getSecret()).parseClaimsJws(token).getBody());
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException ex) {
             logger.debug("Error occurred while decoding JWT token", ex);
         } catch (ExpiredJwtException ex) {

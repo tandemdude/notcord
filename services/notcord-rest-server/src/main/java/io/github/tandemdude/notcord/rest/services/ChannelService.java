@@ -1,6 +1,6 @@
 package io.github.tandemdude.notcord.rest.services;
 
-import io.github.tandemdude.notcord.rest.config.GroupDmConfig;
+import io.github.tandemdude.notcord.rest.config.GroupDmProperties;
 import io.github.tandemdude.notcord.rest.models.db.Channel;
 import io.github.tandemdude.notcord.rest.models.db.DmChannelMember;
 import io.github.tandemdude.notcord.rest.models.db.enums.ChannelType;
@@ -20,18 +20,18 @@ import java.util.stream.Stream;
 public class ChannelService {
     private final DmChannelMemberRepository dmChannelMemberRepository;
     private final ChannelRepository channelRepository;
-    private final GroupDmConfig groupDmConfig;
+    private final GroupDmProperties groupDmProperties;
     private final UserRepository userRepository;
 
     public ChannelService(
         DmChannelMemberRepository dmChannelMemberRepository,
         ChannelRepository channelRepository,
-        GroupDmConfig groupDmConfig,
+        GroupDmProperties groupDmProperties,
         UserRepository userRepository
     ) {
         this.dmChannelMemberRepository = dmChannelMemberRepository;
         this.channelRepository = channelRepository;
-        this.groupDmConfig = groupDmConfig;
+        this.groupDmProperties = groupDmProperties;
         this.userRepository = userRepository;
     }
 
@@ -72,7 +72,7 @@ public class ChannelService {
     }
 
     public Mono<Channel> createNewGroupDmChannel(String ownerId, String name, List<String> recipientIds) {
-        return channelRepository.save(Channel.newGroupDmChannel(name, groupDmConfig.getMaxMembers(), ownerId))
+        return channelRepository.save(Channel.newGroupDmChannel(name, groupDmProperties.getMaxMembers(), ownerId))
             .flatMap(channel -> dmChannelMemberRepository
                 // Ensure to link the owner of the DM channel to it as well as the other recipients
                 .saveAll(Stream.concat(recipientIds.stream(), Stream.of(ownerId))
@@ -97,7 +97,7 @@ public class ChannelService {
             .flatMap(result -> result.isError() ? Mono.just(result)
                 : getDmChannelsForUser(result.getResult(), ChannelType.GROUP_DM)
                 .collectList()
-                .map(channels -> channels.size() < groupDmConfig.getMaxChannelsPerUser()
+                .map(channels -> channels.size() < groupDmProperties.getMaxChannelsPerUser()
                     ? result : new ResultContainer<>("group_dm_limit_reached", result.getResult())));
     }
 }

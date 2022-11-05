@@ -63,15 +63,15 @@ CREATE TABLE IF NOT EXISTS notcord.oauth2_credentials
 
 CREATE TABLE IF NOT EXISTS notcord.oauth2_tokens
 (
-    id            VARCHAR(32) PRIMARY KEY,
-    type          VARCHAR(12)              NOT NULL,
-    access_token  TEXT                     NOT NULL UNIQUE,
-    refresh_token TEXT        DEFAULT NULL UNIQUE,
-    access_token_expires_at   TIMESTAMP WITH TIME ZONE NOT NULL,
-    refresh_token_expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
-    user_id       VARCHAR(24)              NOT NULL REFERENCES notcord.users (id) ON DELETE CASCADE,
-    scope         INTEGER                  NOT NULL,
-    client_id     VARCHAR(24) DEFAULT NULL REFERENCES notcord.oauth2_credentials (client_id) ON DELETE CASCADE
+    id                       VARCHAR(32) PRIMARY KEY,
+    type                     VARCHAR(12)              NOT NULL,
+    access_token             TEXT                     NOT NULL UNIQUE,
+    refresh_token            TEXT        DEFAULT NULL UNIQUE,
+    access_token_expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    refresh_token_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_id                  VARCHAR(24)              NOT NULL REFERENCES notcord.users (id) ON DELETE CASCADE,
+    scope                    INTEGER                  NOT NULL,
+    client_id                VARCHAR(24) DEFAULT NULL REFERENCES notcord.oauth2_credentials (client_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS notcord.oauth2_authorization_codes

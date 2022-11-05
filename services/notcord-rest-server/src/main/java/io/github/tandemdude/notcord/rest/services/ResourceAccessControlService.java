@@ -2,7 +2,7 @@ package io.github.tandemdude.notcord.rest.services;
 
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
-import io.github.tandemdude.notcord.rest.config.EndpointConfig;
+import io.github.tandemdude.notcord.rest.config.EndpointProperties;
 import io.github.tandemdude.notcord.rest.models.utility.Oauth2TokenPair;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -15,10 +15,10 @@ import java.time.Instant;
 public class ResourceAccessControlService {
     private static final WebClient webClient = WebClient.create();
 
-    private final EndpointConfig endpointConfig;
+    private final EndpointProperties endpointProperties;
 
-    public ResourceAccessControlService(EndpointConfig endpointConfig) {
-        this.endpointConfig = endpointConfig;
+    public ResourceAccessControlService(EndpointProperties endpointProperties) {
+        this.endpointProperties = endpointProperties;
     }
 
     public Mono<Oauth2TokenPair> validateTokenAndCheckHasAnyScopes(String token, long... scopes) {
@@ -30,7 +30,7 @@ public class ResourceAccessControlService {
         var tokenString = parts[1];
 
         return webClient.get()
-            .uri(endpointConfig.cleanAuthorizerUrl(), builder -> builder
+            .uri(endpointProperties.cleanAuthorizerUrl(), builder -> builder
                 .pathSegment("/oauth/token_info")
                 .queryParam("token", tokenString)
                 .build())

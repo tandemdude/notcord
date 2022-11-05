@@ -2,7 +2,7 @@ package io.github.tandemdude.notcord.rest.controllers;
 
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
-import io.github.tandemdude.notcord.rest.config.GroupDmConfig;
+import io.github.tandemdude.notcord.rest.config.GroupDmProperties;
 import io.github.tandemdude.notcord.rest.models.db.DmChannelMember;
 import io.github.tandemdude.notcord.rest.models.db.Message;
 import io.github.tandemdude.notcord.rest.models.db.enums.ChannelType;
@@ -33,7 +33,7 @@ public class UserController {
     private final ResourceAccessControlService resourceAccessControlService;
     private final MessageRepository messageRepository;
     private final ChannelService channelService;
-    private final GroupDmConfig groupDmConfig;
+    private final GroupDmProperties groupDmProperties;
     private final DmChannelMemberRepository dmChannelMemberRepository;
 
     public UserController(
@@ -41,20 +41,25 @@ public class UserController {
         ResourceAccessControlService resourceAccessControlService,
         MessageRepository messageRepository,
         ChannelService channelService,
-        GroupDmConfig groupDmConfig,
+        GroupDmProperties groupDmProperties,
         DmChannelMemberRepository dmChannelMemberRepository
     ) {
         this.userRepository = userRepository;
         this.resourceAccessControlService = resourceAccessControlService;
         this.messageRepository = messageRepository;
         this.channelService = channelService;
-        this.groupDmConfig = groupDmConfig;
+        this.groupDmProperties = groupDmProperties;
         this.dmChannelMemberRepository = dmChannelMemberRepository;
     }
 
     @GetMapping("/-")
     public Mono<UserResponse> getOwnUser(@RequestHeader("Authorization") String token) {
-        return resourceAccessControlService.validateTokenAndCheckHasAnyScopes(token, Scope.USER, Scope.BOT, Scope.IDENTITY_READ)
+        return resourceAccessControlService.validateTokenAndCheckHasAnyScopes(
+                token,
+                Scope.USER,
+                Scope.BOT,
+                Scope.IDENTITY_READ
+            )
             .flatMap(pair -> userRepository.findById(pair.getUserId()))
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException(
                 "You don't exist. Piss off!")))
@@ -134,15 +139,15 @@ public class UserController {
             // Check if the user has already reached the limit of joined group DM channels
             .flatMap(pair -> channelService.getDmChannelsForUser(pair.getUserId(), ChannelType.GROUP_DM)
                 .collectList()
-                .filter(channels -> channels.size() < groupDmConfig.getMaxChannelsPerUser())
+                .filter(channels -> channels.size() < groupDmProperties.getMaxChannelsPerUser())
                 // Throw an exception if the user is in too many group DMs to create another
                 .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.conflictException(
                     "Maximum group DM channel limit has been reached")))
                 .map(unused -> pair))
             // Check if the user has specified more recipients than are allowed in a group DM
-            .filter(unused -> body.getRecipientIds().size() < groupDmConfig.getMaxMembers())
+            .filter(unused -> body.getRecipientIds().size() < groupDmProperties.getMaxMembers())
             .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.badRequestException(
-                "'recipientIds' must contain at most " + (groupDmConfig.getMaxMembers() - 1) + " users")))
+                "'recipientIds' must contain at most " + (groupDmProperties.getMaxMembers() - 1) + " users")))
             // Check whether any of the requested recipients cannot be added to a new group DM
             .flatMap(pair -> channelService
                 .validateUsersCanBeAddedToGroupDmChannel(pair.getUserId(), Flux.fromIterable(body.getRecipientIds()))
