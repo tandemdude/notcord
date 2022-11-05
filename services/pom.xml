@@ -45,6 +45,7 @@
 
     <properties>
         <!-- Dependencies -->
+        <reactor-test.version>3.4.22</reactor-test.version>
         <flyway-core.version>9.6.0</flyway-core.version>
         <lombok.version>1.18.24</lombok.version>
 
@@ -78,6 +79,12 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-test</artifactId>
+                <scope>test</scope>
+                <version>${reactor-test.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
