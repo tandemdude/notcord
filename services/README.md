@@ -4,6 +4,7 @@
 
 - Java 19+
 - Maven
+- Nodejs 16+ (authorizer only)
 
 ## Environment
 
