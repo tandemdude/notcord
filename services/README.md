@@ -28,6 +28,9 @@ directory.
 
 #### Authorizer
 
+Note that the authorizer requires `tailwindcss` to be installed before you can run the project. This should be installed
+by first running `npm install` in the `notcord-authorizer-server` directory before attempting to run the below command.
+
 ```shell
 ./notcord run authorizer
 ```
