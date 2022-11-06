@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 tandemdude
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.github.tandemdude.notcord.rest.controllers;
 
 import io.github.tandemdude.notcord.commons.enums.Scope;
@@ -38,7 +54,7 @@ public class GuildController {
     @Transactional
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<GuildResponse> createGuild(
-            @Valid @RequestBody GuildCreateRequestBody body, @RequestHeader("Authorization") String token
+        @Valid @RequestBody GuildCreateRequestBody body, @RequestHeader("Authorization") String token
     ) {
         // TODO - add owner to the guild as a member
         // TODO - check user guild limit
@@ -53,7 +69,12 @@ public class GuildController {
         @PathVariable String guildId,
         @RequestHeader("Authorization") String token
     ) {
-        return resourceAccessControlService.validateTokenAndCheckHasAnyScopes(token, Scope.USER, Scope.BOT, Scope.GUILDS_READ)
+        return resourceAccessControlService.validateTokenAndCheckHasAnyScopes(
+                token,
+                Scope.USER,
+                Scope.BOT,
+                Scope.GUILDS_READ
+            )
             .flatMap(pair -> guildRepository
                 .findById(guildId)  // TODO - Filter to check if owner of token has permission to read this specific guild
                 .switchIfEmpty(Mono.error(() -> HttpExceptionFactory.resourceNotFoundException("A guild with ID '" + guildId + "' does not exist"))))
