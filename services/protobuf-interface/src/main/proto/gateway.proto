@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package gateway;
+
+option java_package = "io.github.tandemdude.notcord.proto";
+option java_multiple_files = true;
+
+
+message Identity {
+  string token = 1;
+}
+message SessionDetails {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+message MessageData {
+  string id = 1;
+  string author_id = 2;
+  string channel_id = 3;
+  optional string guild_id = 4;
+  string content = 5;
+  optional int32 nonce = 6;
+}
+
+enum EventType {
+  UNSPECIFIED = 0;
+  MESSAGE_CREATE = 1;
+}
+message Event {
+  EventType type = 1;
+  oneof event_data {
+    MessageData message = 2;
+  }
+}
+
+service GatewayService {
+  rpc createSession(Identity) returns (SessionDetails);
+  rpc consumeEvents(SessionDetails) returns (stream Event);
+}

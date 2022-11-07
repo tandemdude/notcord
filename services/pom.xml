@@ -17,10 +17,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>notcord-authorizer-server</module>
-        <module>notcord-commons</module>
-        <module>notcord-rest-server</module>
-        <!--        <module>gateway</module>-->
+        <module>authorizer-server</module>
+        <module>commons</module>
+        <module>gateway-server</module>
+        <module>rest-server</module>
+        <module>protobuf-interface</module>
     </modules>
 
     <inceptionYear>2022</inceptionYear>
@@ -48,6 +49,7 @@
         <reactor-test.version>3.4.22</reactor-test.version>
         <flyway-core.version>9.6.0</flyway-core.version>
         <lombok.version>1.18.24</lombok.version>
+        <reactor-kafka.version>1.3.13</reactor-kafka.version>
 
         <!-- Plugins -->
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
@@ -95,6 +97,11 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-core</artifactId>
                 <version>${flyway-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor.kafka</groupId>
+                <artifactId>reactor-kafka</artifactId>
+                <version>${reactor-kafka.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

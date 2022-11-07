@@ -1,0 +1,54 @@
+debug: false
+
+logging:
+  level:
+    root: INFO
+
+server:
+  port: 8082
+  http2:
+    enabled: true
+  error:
+    whitelabel:
+      enabled: false
+    include-message: always
+
+spring:
+  main:
+    web-application-type: NONE
+  r2dbc:
+    url: r2dbc:h2:file://${DB_PATH:./../testdb}
+    repositories:
+      enabled: true
+    username: sa
+    password:
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: true
+  kafka:
+    bootstrap-servers: "[::1]:9092"
+    #    producer:
+    #      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    #      value-serializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    consumer:
+      group-id: notcord-gateway
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            use.type.headers: false
+            value.default.type: io.github.tandemdude.notcord.gateway.models.KafkaMessage
+    properties:
+      spring.json.trusted.packages: "*"
+
+endpoints:
+  frontend: ${FRONTEND_BASE_URL:http://localhost:3000}
+  rest: ${REST_API_BASE_URL:http://localhost:8080}
+  authorizer: ${AUTHORIZER_BASE_URL:http://localhost:8081}
+
+kafka:
+  consumer:
+    topic: ${KAFKA_CONSUMER_TOPIC:notcord_events}
