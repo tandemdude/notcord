@@ -16,8 +16,10 @@
 
 package io.github.tandemdude.notcord.rest.controllers;
 
+import io.github.tandemdude.notcord.commons.enums.EventType;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
+import io.github.tandemdude.notcord.commons.models.KafkaMessage;
 import io.github.tandemdude.notcord.rest.config.GroupDmProperties;
 import io.github.tandemdude.notcord.rest.models.db.DmChannelMember;
 import io.github.tandemdude.notcord.rest.models.db.Message;
@@ -31,6 +33,7 @@ import io.github.tandemdude.notcord.rest.repositories.DmChannelMemberRepository;
 import io.github.tandemdude.notcord.rest.repositories.MessageRepository;
 import io.github.tandemdude.notcord.rest.repositories.UserRepository;
 import io.github.tandemdude.notcord.rest.services.ChannelService;
+import io.github.tandemdude.notcord.rest.services.KafkaProducerService;
 import io.github.tandemdude.notcord.rest.services.ResourceAccessControlService;
 import jakarta.validation.Valid;
 import lombok.Data;
@@ -51,6 +54,7 @@ public class UserController {
     private final ChannelService channelService;
     private final GroupDmProperties groupDmProperties;
     private final DmChannelMemberRepository dmChannelMemberRepository;
+    private final KafkaProducerService kafkaProducerService;
 
     public UserController(
         UserRepository userRepository,
@@ -58,7 +62,8 @@ public class UserController {
         MessageRepository messageRepository,
         ChannelService channelService,
         GroupDmProperties groupDmProperties,
-        DmChannelMemberRepository dmChannelMemberRepository
+        DmChannelMemberRepository dmChannelMemberRepository,
+        KafkaProducerService kafkaProducerService
     ) {
         this.userRepository = userRepository;
         this.resourceAccessControlService = resourceAccessControlService;
@@ -66,6 +71,7 @@ public class UserController {
         this.channelService = channelService;
         this.groupDmProperties = groupDmProperties;
         this.dmChannelMemberRepository = dmChannelMemberRepository;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @GetMapping("/-")
@@ -107,6 +113,9 @@ public class UserController {
                 .map(channel -> new Message(channel.getId(), tokenInfo.getUserId(), null, body)))
             // Save the created message
             .flatMap(messageRepository::save)
+            .flatMap(message -> kafkaProducerService
+                .sendMessage(new KafkaMessage(message.getChannelId(), EventType.MESSAGE_CREATE), message)
+                .thenReturn(message))
             .map(MessageResponse::from);
     }
 
@@ -201,7 +210,10 @@ public class UserController {
                     .map(ResultContainer::getResult).collectList()
                     .flatMap(ids -> channelService
                         .createNewGroupDmChannel(ownerId, body.getName(), ids)
-                        .map(channel -> GroupDmChannelResponse.from(channel, ids)))
+                        .map(channel -> GroupDmChannelResponse.from(channel, ids))
+                        .flatMap(channel -> kafkaProducerService
+                            .sendMessage(new KafkaMessage(channel.getId(), EventType.CHANNEL_CREATE), channel)
+                            .thenReturn(channel)))
                     .map(ResponseEntity::ok);
             });
     }

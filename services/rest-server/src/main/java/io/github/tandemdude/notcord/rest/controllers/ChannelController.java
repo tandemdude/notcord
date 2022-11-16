@@ -16,8 +16,10 @@
 
 package io.github.tandemdude.notcord.rest.controllers;
 
+import io.github.tandemdude.notcord.commons.enums.EventType;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.exceptions.HttpExceptionFactory;
+import io.github.tandemdude.notcord.commons.models.KafkaMessage;
 import io.github.tandemdude.notcord.rest.models.db.DmChannelMember;
 import io.github.tandemdude.notcord.rest.models.db.Message;
 import io.github.tandemdude.notcord.rest.models.requests.MessageCreateRequestBody;
@@ -27,6 +29,7 @@ import io.github.tandemdude.notcord.rest.models.responses.MessageResponse;
 import io.github.tandemdude.notcord.rest.repositories.ChannelRepository;
 import io.github.tandemdude.notcord.rest.repositories.DmChannelMemberRepository;
 import io.github.tandemdude.notcord.rest.repositories.MessageRepository;
+import io.github.tandemdude.notcord.rest.services.KafkaProducerService;
 import io.github.tandemdude.notcord.rest.services.ResourceAccessControlService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -42,17 +45,20 @@ public class ChannelController {
     private final ResourceAccessControlService resourceAccessControlService;
     private final DmChannelMemberRepository dmChannelMemberRepository;
     private final MessageRepository messageRepository;
+    private final KafkaProducerService kafkaProducerService;
 
     public ChannelController(
         ChannelRepository channelRepository,
         ResourceAccessControlService resourceAccessControlService,
         DmChannelMemberRepository dmChannelMemberRepository,
-        MessageRepository messageRepository
+        MessageRepository messageRepository,
+        KafkaProducerService kafkaProducerService
     ) {
         this.channelRepository = channelRepository;
         this.resourceAccessControlService = resourceAccessControlService;
         this.dmChannelMemberRepository = dmChannelMemberRepository;
         this.messageRepository = messageRepository;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @GetMapping("/{channelId:[1-9][0-9]+}")
@@ -102,7 +108,22 @@ public class ChannelController {
                 // .filterWhen(/* ... */).switchIfEmpty(/* ... */)
                 .map(channel -> new Message(channelId, tokenInfo.getUserId(), channel.getGuildId(), body)))
             .flatMap(messageRepository::save)
+            .flatMap(message -> kafkaProducerService
+                .sendMessage(new KafkaMessage(channelId, EventType.MESSAGE_CREATE), message)
+                .thenReturn(message))
             .map(MessageResponse::from);
+    }
+
+    @Transactional
+    @PutMapping(value = "/{channelId:[1-9][0-9]+}/messages/{messageId:[1-9][0-9]+}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<MessageResponse> updateMessage(
+        @PathVariable String channelId,
+        @PathVariable String messageId,
+        // TODO - request body
+        @RequestHeader("Authorization") String token
+    ) {
+        // TODO - implement
+        return Mono.empty();
     }
 
     @Transactional
@@ -119,7 +140,9 @@ public class ChannelController {
                 // TODO - if in guild, check user has permissions to delete others' messages
                 .filter(message -> message.getAuthorId().equals(tokenInfo.getUserId()))
                 .switchIfEmpty(Mono.error(HttpExceptionFactory::missingRequiredPermissionsException)))
-            .flatMap(messageRepository::delete)
+            .flatMap(message -> messageRepository
+                .delete(message)
+                .then(kafkaProducerService.sendMessage(new KafkaMessage(channelId, EventType.MESSAGE_DELETE), message)))
             .thenReturn(ResponseEntity.noContent().build());
     }
 }

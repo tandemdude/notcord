@@ -14,33 +14,19 @@
  * limitations under the License.
  */
 
-package io.github.tandemdude.notcord.gateway.config;
+package io.github.tandemdude.notcord.rest.config;
 
 import io.github.tandemdude.notcord.commons.models.KafkaMessage;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
-import reactor.kafka.receiver.ReceiverOptions;
-
-import java.util.List;
+import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
+import reactor.kafka.sender.SenderOptions;
 
 @Configuration
-public class KafkaConsumerConfig {
+public class KafkaProducerConfig {
     @Bean
-    public ReceiverOptions<String, KafkaMessage> kafkaReceiverOptions(
-        @Value("${kafka.consumer.topic}") String topic,
-        KafkaProperties kafkaProperties
-    ) {
-        return ReceiverOptions.<String, KafkaMessage>create(kafkaProperties.buildConsumerProperties())
-            .subscription(List.of(topic));
-    }
-
-    @Bean
-    public ReactiveKafkaConsumerTemplate<String, KafkaMessage> reactiveKafkaConsumerTemplate(
-        ReceiverOptions<String, KafkaMessage> receiverOptions
-    ) {
-        return new ReactiveKafkaConsumerTemplate<>(receiverOptions);
+    public ReactiveKafkaProducerTemplate<String, KafkaMessage> reactiveKafkaProducerTemplate(KafkaProperties kafkaProperties) {
+        return new ReactiveKafkaProducerTemplate<>(SenderOptions.create(kafkaProperties.buildProducerProperties()));
     }
 }

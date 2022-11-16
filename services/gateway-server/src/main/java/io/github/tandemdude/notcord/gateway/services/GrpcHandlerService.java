@@ -19,7 +19,11 @@ package io.github.tandemdude.notcord.gateway.services;
 import io.github.tandemdude.notcord.commons.enums.Scope;
 import io.github.tandemdude.notcord.commons.models.Oauth2TokenInfo;
 import io.github.tandemdude.notcord.gateway.config.EndpointProperties;
-import io.github.tandemdude.notcord.proto.*;
+import io.github.tandemdude.notcord.gateway.conversion.KafkaMessageConverter;
+import io.github.tandemdude.notcord.proto.Event;
+import io.github.tandemdude.notcord.proto.Identity;
+import io.github.tandemdude.notcord.proto.ReactorGatewayServiceGrpc;
+import io.github.tandemdude.notcord.proto.SessionDetails;
 import io.grpc.Status;
 import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
@@ -80,7 +84,6 @@ public class GrpcHandlerService extends ReactorGatewayServiceGrpc.GatewayService
             .doOnNext(details -> sessionIds.put(details.getSessionId(), details.getUserId()));
     }
 
-    // TODO - implement
     @Override
     public Flux<Event> consumeEvents(Mono<SessionDetails> sessionDetails) {
         return sessionDetails
@@ -89,13 +92,8 @@ public class GrpcHandlerService extends ReactorGatewayServiceGrpc.GatewayService
             .flatMapMany(details -> kafkaConsumerService.consumeMessagesFor(sessionIds.get(details.getSessionId())))
             // TODO - move conversion logic elsewhere
             // TODO - decide on proper conversion logic and event/kafkamessage format
-            .map(kafkaMessage -> Event
-                .newBuilder()
-                .setType(EventType.MESSAGE_CREATE)
-                .setMessage(MessageData
-                    .newBuilder()
-                    .build())
-                .build()
-            );
+            .mapNotNull(kafkaMessage -> KafkaMessageConverter
+                .convertAndApply(Event.newBuilder().setType(kafkaMessage.getType()), kafkaMessage))
+            .map(Event.Builder::build);
     }
 }

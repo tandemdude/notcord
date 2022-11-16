@@ -16,18 +16,25 @@
 
 package io.github.tandemdude.notcord.gateway.services;
 
-import io.github.tandemdude.notcord.gateway.models.KafkaMessage;
+import io.github.tandemdude.notcord.commons.models.KafkaMessage;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 @Service
-public class KafkaConsumerService implements CommandLineRunner {
+public class KafkaConsumerService {
+    private final RedisEventRuleCacheService eventRuleCacheService;
     private final Flux<KafkaMessage> sharedFlux;
 
-    public KafkaConsumerService(ReactiveKafkaConsumerTemplate<String, KafkaMessage> reactiveKafkaConsumerTemplate) {
+    public KafkaConsumerService(
+        RedisEventRuleCacheService eventRuleCacheService,
+        ReactiveKafkaConsumerTemplate<String, KafkaMessage> reactiveKafkaConsumerTemplate
+    ) {
+        this.eventRuleCacheService = eventRuleCacheService;
         sharedFlux = reactiveKafkaConsumerTemplate.receiveAutoAck()
             .log()
             .map(ConsumerRecord::value)
@@ -37,10 +44,14 @@ public class KafkaConsumerService implements CommandLineRunner {
     public Flux<KafkaMessage> consumeMessagesFor(String userId) {
         // TODO - check event is applicable for given userId
         return sharedFlux;
+        //            .filterWhen(message -> eventRuleCacheService
+        //                .get(userId, message.getHashKey())
+        //                .map(bitfield -> EventType.contains(bitfield, message.getType())));
     }
 
-    @Override
-    public void run(String... args) {
+    @Async
+    @EventListener(ApplicationStartedEvent.class)
+    public void onApplicationStarted() {
         sharedFlux.subscribe();
     }
 }

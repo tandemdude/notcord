@@ -18,7 +18,9 @@
         <!-- Plugins -->
         <flyway-maven-plugin.version>9.7.0</flyway-maven-plugin.version>
         <!-- Default database file location -->
-        <flyway-db-url>jdbc:h2:file:../testdb</flyway-db-url>
+        <flyway.url>jdbc:postgresql://localhost:5432/postgres</flyway.url>
+        <flyway.user>postgres</flyway.user>
+        <flyway.password>postgres</flyway.password>
     </properties>
 
     <profiles>
@@ -26,11 +28,16 @@
             <id>db-url-env-var-present</id>
             <activation>
                 <property>
-                    <name>env.DB_URL</name>
+                    <name>env.POSTGRES_HOST</name>
                 </property>
             </activation>
             <properties>
-                <flyway-db-url>${env.DB_URL}</flyway-db-url>
+                <!--suppress UnresolvedMavenProperty -->
+                <flyway.url>jdbc:postgresql://${env.POSTGRES_HOST}:${env.POSTGRES_PORT}/${env.POSTGRES_DB}</flyway.url>
+                <!--suppress UnresolvedMavenProperty -->
+                <flyway.user>${env.POSTGRES_USER}</flyway.user>
+                <!--suppress UnresolvedMavenProperty -->
+                <flyway.password>${env.POSTGRES_PASSWORD}</flyway.password>
             </properties>
         </profile>
     </profiles>
@@ -53,13 +60,25 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-h2</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.kafka</groupId>
+            <artifactId>reactor-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>r2dbc-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -96,7 +115,6 @@
                 <configuration>
                     <!-- TODO - config file? -->
                     <url>${flyway-db-url}</url>
-                    <user>sa</user>
                     <locations>filesystem:../_migrations</locations>
                     <baselineOnMigrate>true</baselineOnMigrate>
                 </configuration>

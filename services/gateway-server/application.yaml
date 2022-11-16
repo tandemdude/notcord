@@ -6,12 +6,6 @@ logging:
 
 server:
   port: 8082
-  http2:
-    enabled: true
-  error:
-    whitelabel:
-      enabled: false
-    include-message: always
 
 spring:
   main:
@@ -27,7 +21,7 @@ spring:
     deserialization:
       FAIL_ON_UNKNOWN_PROPERTIES: true
   kafka:
-    bootstrap-servers: "[::1]:9092"
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_URL:159.65.88.244:9092}
     #    producer:
     #      key-serializer: org.apache.kafka.common.serialization.StringSerializer
     #      value-serializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -40,9 +34,12 @@ spring:
         spring:
           json:
             use.type.headers: false
-            value.default.type: io.github.tandemdude.notcord.gateway.models.KafkaMessage
+            value.default.type: io.github.tandemdude.notcord.commons.models.KafkaMessage
     properties:
       spring.json.trusted.packages: "*"
+  redis:
+    url: ${REDIS_URL:redis://:@localhost:6379}
+    database: ${REDIS_DATABASE:0}
 
 endpoints:
   frontend: ${FRONTEND_BASE_URL:http://localhost:3000}

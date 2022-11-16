@@ -5,7 +5,7 @@ package gateway;
 option java_package = "io.github.tandemdude.notcord.proto";
 option java_multiple_files = true;
 
-
+// Creating sessions to receive events, and opening the event consumer connection
 message Identity {
   string token = 1;
 }
@@ -13,7 +13,20 @@ message SessionDetails {
   string session_id = 1;
   string user_id = 2;
 }
-
+// Data models that can be sent within events
+message GuildData {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+}
+message ChannelData {
+  string id = 1;
+  uint32 type = 2;
+  optional string name = 3;
+  optional string guild_id = 4;
+  optional string owner_id = 5;
+  repeated string member_ids = 6;
+}
 message MessageData {
   string id = 1;
   string author_id = 2;
@@ -22,18 +35,17 @@ message MessageData {
   string content = 5;
   optional int32 nonce = 6;
 }
-
-enum EventType {
-  UNSPECIFIED = 0;
-  MESSAGE_CREATE = 1;
-}
+// Event data model
 message Event {
-  EventType type = 1;
+  uint64 type = 1;
   oneof event_data {
-    MessageData message = 2;
+    GuildData guild = 2;
+    ChannelData channel = 3;
+    MessageData message = 4;
   }
 }
 
+// Service definition
 service GatewayService {
   rpc createSession(Identity) returns (SessionDetails);
   rpc consumeEvents(SessionDetails) returns (stream Event);
