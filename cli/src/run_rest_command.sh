@@ -20,7 +20,7 @@ if [ "$workdir" != "notcord" ]; then
 fi
 
 pushd services || exit 1
-pushd notcord-rest-server || exit 1
+pushd rest-server || exit 1
 
 if [[ ! "${NC_WORKER_ID}" =~ ^[0-9]+$ ]]; then
   echo "NC_WORKER_ID not set or invalid. Defaulting to 0"

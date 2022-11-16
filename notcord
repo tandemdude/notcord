@@ -74,6 +74,7 @@ notcord_run_usage() {
   echo "  frontend     Run the frontend"
   echo "  rest         Run the REST backend service"
   echo "  authorizer   Run the authorizer backend service"
+  echo "  gateway      Run the gateway backend service"
   echo
 
   # :command.long_usage
@@ -161,6 +162,35 @@ notcord_run_authorizer_usage() {
   printf "Usage:\n"
   printf "  notcord run authorizer\n"
   printf "  notcord run authorizer --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "Options:\n"
+
+    # :command.usage_fixed_flags
+    echo "  --help, -h"
+    printf "    Show this help\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+notcord_run_gateway_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "notcord run gateway - Run the gateway backend service\n"
+    echo
+
+  else
+    printf "notcord run gateway - Run the gateway backend service\n"
+    echo
+
+  fi
+
+  printf "Usage:\n"
+  printf "  notcord run gateway\n"
+  printf "  notcord run gateway --help | -h\n"
   echo
 
   # :command.long_usage
@@ -286,6 +316,21 @@ inspect_args() {
 # :command.function
 notcord_run_frontend_command() {
   # src/run_frontend_command.sh
+  #
+  # Copyright 2022 tandemdude
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #    http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+
   workdir=${PWD##*/}
   if [ "$workdir" != "notcord" ]; then
     echo "Commands must be run from the repository root"
@@ -300,6 +345,21 @@ notcord_run_frontend_command() {
 # :command.function
 notcord_run_rest_command() {
   # src/run_rest_command.sh
+  #
+  # Copyright 2022 tandemdude
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #    http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+
   workdir=${PWD##*/}
   if [ "$workdir" != "notcord" ]; then
     echo "Commands must be run from the repository root"
@@ -307,7 +367,7 @@ notcord_run_rest_command() {
   fi
 
   pushd services || exit 1
-  pushd notcord-rest-server || exit 1
+  pushd rest-server || exit 1
 
   if [[ ! "${NC_WORKER_ID}" =~ ^[0-9]+$ ]]; then
     echo "NC_WORKER_ID not set or invalid. Defaulting to 0"
@@ -325,6 +385,21 @@ notcord_run_rest_command() {
 # :command.function
 notcord_run_authorizer_command() {
   # src/run_authorizer_command.sh
+  #
+  # Copyright 2022 tandemdude
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #    http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+
   workdir=${PWD##*/}
   if [ "$workdir" != "notcord" ]; then
     echo "Commands must be run from the repository root"
@@ -332,7 +407,7 @@ notcord_run_authorizer_command() {
   fi
 
   pushd services || exit 1
-  pushd notcord-authorizer-server || exit 1
+  pushd authorizer-server || exit 1
 
   if [[ ! "${NC_WORKER_ID}" =~ ^[0-9]+$ ]]; then
     echo "NC_WORKER_ID not set or invalid. Defaulting to 0"
@@ -348,8 +423,64 @@ notcord_run_authorizer_command() {
 }
 
 # :command.function
+notcord_run_gateway_command() {
+  # src/run_gateway_command.sh
+  #
+  # Copyright 2022 tandemdude
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #    http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+
+  workdir=${PWD##*/}
+  if [ "$workdir" != "notcord" ]; then
+    echo "Commands must be run from the repository root"
+    exit 1
+  fi
+
+  pushd services || exit 1
+  pushd gateway-server || exit 1
+
+  # Gateway does not need these for now
+  #if [[ ! "${NC_WORKER_ID}" =~ ^[0-9]+$ ]]; then
+  #  echo "NC_WORKER_ID not set or invalid. Defaulting to 0"
+  #  export NC_WORKER_ID=0
+  #fi
+  #if [[ ! "${NC_PROCESS_ID}" =~ ^[0-9]+$ ]]; then
+  #  echo "NC_PROCESS_ID not set or invalid. Defaulting to 0"
+  #  export NC_PROCESS_ID=0
+  #fi
+
+  ../mvnw clean package spring-boot:run
+
+}
+
+# :command.function
 notcord_install_backend_command() {
   # src/install_backend_command.sh
+  #
+  # Copyright 2022 tandemdude
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #    http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+
   workdir=${PWD##*/}
   if [ "$workdir" != "notcord" ]; then
     echo "Commands must be run from the repository root"
@@ -472,6 +603,13 @@ notcord_run_parse_requirements() {
     action="authorizer"
     shift
     notcord_run_authorizer_parse_requirements "$@"
+    shift $#
+    ;;
+
+  gateway )
+    action="gateway"
+    shift
+    notcord_run_gateway_parse_requirements "$@"
     shift $#
     ;;
 
@@ -626,6 +764,44 @@ notcord_run_authorizer_parse_requirements() {
 }
 
 # :command.parse_requirements
+notcord_run_gateway_parse_requirements() {
+  # :command.fixed_flags_filter
+  case "${1:-}" in
+  --help | -h )
+    long_usage=yes
+    notcord_run_gateway_usage
+    exit
+    ;;
+
+  esac
+
+  # :command.command_filter
+  action="run gateway"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+
+    -?* )
+      printf "invalid option: %s\n" "$key" >&2
+      exit 1
+      ;;
+
+    * )
+      # :command.parse_requirements_case
+      # :command.parse_requirements_case_simple
+      printf "invalid argument: %s\n" "$key" >&2
+      exit 1
+
+      ;;
+
+    esac
+  done
+
+}
+
+# :command.parse_requirements
 notcord_install_parse_requirements() {
   # :command.fixed_flags_filter
   case "${1:-}" in
@@ -732,6 +908,21 @@ initialize() {
   set -e
 
   # src/initialize.sh
+  #
+  # Copyright 2022 tandemdude
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #    http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+
 
 }
 
@@ -773,6 +964,14 @@ run() {
       notcord_run_authorizer_usage
     else
       notcord_run_authorizer_command
+    fi
+
+  elif [[ $action == "run gateway" ]]; then
+    if [[ ${args[--help]:-} ]]; then
+      long_usage=yes
+      notcord_run_gateway_usage
+    else
+      notcord_run_gateway_command
     fi
 
   elif [[ $action == "install" ]]; then

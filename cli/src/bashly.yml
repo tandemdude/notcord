@@ -15,6 +15,9 @@ commands:
   - name: authorizer
     help: Run the authorizer backend service
 
+  - name: gateway
+    help: Run the gateway backend service
+
 - name: install
   help: Install one of the components of notcord
   commands:

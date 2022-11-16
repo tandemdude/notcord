@@ -8,7 +8,7 @@
 
 ## Environment
 
-There are two required environment variables that must be set in order for the server to start:
+There are two required environment variables that must be set in order for the REST or authorizer server to start:
 
 - `NC_WORKER_ID` (integer) - the ID of the worker this backend instance is running on, should be `0` if it is the only
   worker.
@@ -30,7 +30,7 @@ directory.
 #### Authorizer
 
 Note that the authorizer requires `tailwindcss` to be installed before you can run the project. This should be installed
-by first running `npm install` in the `notcord-authorizer-server` directory before attempting to run the below command.
+by first running `npm install` in the `authorizer-server` directory before attempting to run the below command.
 
 ```shell
 ./notcord run authorizer
@@ -40,4 +40,10 @@ by first running `npm install` in the `notcord-authorizer-server` directory befo
 
 ```shell
 ./notcord run rest
+```
+
+#### Gateway
+
+```shell
+./notcord run gateway
 ```
