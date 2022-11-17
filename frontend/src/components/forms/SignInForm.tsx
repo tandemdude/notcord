@@ -55,6 +55,7 @@ export default function SignInForm({setShowSignUp, setSignedIn, setContext}) {
                          setIncorrectCredentials(true);
                      } else {
                          alert("An unknown error occurred: " + error.message);
+                         setLoading(false);
                      }
                  });
         },
